@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xml>
+	<ModInfo>
+		<Name value="QuickStack" />
+		<Description value="Enables the player to quickly deposit items from their inventory to nearby containers without the need to open them. Enables the player to lock specific slots." />
+		<Author value="Westwud" />
+		<Version value="1.5.0" />
+	</ModInfo>
+</xml>

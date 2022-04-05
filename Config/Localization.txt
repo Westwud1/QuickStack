@@ -1,0 +1,3 @@
+Key,File,Type,UsedInMainMenu,NoTranslate,english,Context / Alternate Text,german,latam,french,italian,japanese,koreana,polish,brazilian,russian,turkish,schinese,tchinese,spanish
+lblStashQuickStack,UI,Tooltip,,,Quick Stack\nFirst click: Move items from inventory to fill up existing nearby container stacks.\nSecond click: Also create new stacks to move items.,,,,,,,,,,,,,,
+lblStashQuickRestock,UI,Tooltip,,,Quick Restock\nFirst click: Take items from nearby container stacks to fill up existing inventory stacks.\nSecond click: Also create new stacks to take items.,,,,,,,,,,,,,,
