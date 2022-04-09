@@ -33,7 +33,7 @@ internal class Patches
 
 	//This patch overrides the original one to accommodate the locked slots.
 	[HarmonyPatch(typeof(XUiC_ContainerStandardControls), "MoveAll")]
-	private class QS_2
+	/*private class QS_2
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
@@ -117,7 +117,7 @@ internal class Patches
 
 			return false;
 		}
-	}
+	}*/
 
 	//This patch overrides the original one to accommodate the locked slots. 
 	[HarmonyPatch(typeof(XUiC_ContainerStandardControls), "Sort")]
@@ -180,8 +180,8 @@ internal class Patches
 	{
 		public static void Postfix(XUiC_BackpackWindow __instance)
 		{
-			QuickStack.playerBackpackUi = Traverse.Create(__instance).Field("backpackGrid").GetValue() as XUiC_Backpack;
-			XUiController[] slots = QuickStack.playerBackpackUi.GetItemStackControllers();
+			QuickStack.playerBackpack = Traverse.Create(__instance).Field("backpackGrid").GetValue() as XUiC_Backpack;
+			XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
 
 			QuickStack.lastClickTime = 0;
 
