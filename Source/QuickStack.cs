@@ -9,10 +9,11 @@ internal class QuickStack
 	public static int stackRadius = 7;
 	public static XUiC_Backpack playerBackpack;
 	public static XUiC_BackpackWindow backpackWindow;
-	public static int customLockEnum = (int)XUiC_ItemStack.StackLockTypes.Hidden + 1; //XUiC_ItemStack.StackLockTypes - Last used is Hidden with value 4, so we use 5 for our custom locked slots
+	public static XUiC_ContainerStandardControls playerControls;
+	public static int customLockEnum = (int)XUiC_ItemStack.LockTypes.Burning + 1; //XUiC_ItemStack.LockTypes - Last used is Burning with value 5, so we use 6 for our custom locked slots
 
 	//Quickstack functionality
-	public static void MoveQuickStack(XUiC_ContainerStandardControls controls)
+	public static void MoveQuickStack()
 	{
 		float unscaledTime = Time.unscaledTime;
 		XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnly;
@@ -21,7 +22,7 @@ internal class QuickStack
 		lastClickTime = unscaledTime;
 
 		EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
-		int lockedSlots = Traverse.Create(controls).Field("stashLockedSlots").GetValue<int>();
+		int lockedSlots = Traverse.Create(playerControls).Field("stashLockedSlots").GetValue<int>();
 
 		//returns tile entities opened by other players
 		Dictionary<TileEntity, int> openedTileEntities = Traverse.Create(GameManager.Instance).Field("lockedTileEntities").GetValue<Dictionary<TileEntity, int>>();
@@ -42,7 +43,7 @@ internal class QuickStack
 					if (!tileEntity.IsUserAccessing() && !openedTileEntities.ContainsKey(tileEntity) &&
 						(tileEntity.GetTileEntityType() == TileEntityType.Loot || tileEntity.GetTileEntityType() == TileEntityType.SecureLoot || tileEntity.GetTileEntityType() == TileEntityType.SecureLootSigned))
 					{
-						StashItems(playerBackpack, tileEntity, lockedSlots, moveKind, controls.MoveStartBottomRight);
+						StashItems(playerBackpack, tileEntity, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
 						tileEntity.SetModified();
 					}
 				}
@@ -51,7 +52,7 @@ internal class QuickStack
 	}
 
 	//Restock functionallity
-	public static void MoveQuickRestock(XUiC_ContainerStandardControls controls)
+	public static void MoveQuickRestock()
     {
 		float unscaledTime = Time.unscaledTime;
 		XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnly;
@@ -61,15 +62,10 @@ internal class QuickStack
 
 		EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
 		LocalPlayerUI playerUI = LocalPlayerUI.GetUIForPlayer(primaryPlayer);
-		int lockedSlots = Traverse.Create(controls).Field("stashLockedSlots").GetValue<int>();
+		int lockedSlots = Traverse.Create(playerControls).Field("stashLockedSlots").GetValue<int>();
 		XUiC_LootWindowGroup lootWindowGroup = (XUiC_LootWindowGroup)((XUiWindowGroup)playerUI.windowManager.GetWindow("looting")).Controller;
 		XUiC_LootWindow lootWindow = Traverse.Create(lootWindowGroup).Field("lootWindow").GetValue<XUiC_LootWindow>();
 		XUiC_LootContainer lootContainer = Traverse.Create(lootWindow).Field("lootContainer").GetValue<XUiC_LootContainer>();
-
-		XUiController[] playerControllers = playerBackpack.GetItemStackControllers();
-		int[] locks = new int[playerControllers.Length];
-		for (int i = 0; i < playerControllers.Length; ++i)
-			locks[i] = Traverse.Create(playerControllers[i]).Field("stackLockType").GetValue<int>();
 
 		//returns tile entities opened by other players
 		Dictionary<TileEntity, int> openedTileEntities = Traverse.Create(GameManager.Instance).Field("lockedTileEntities").GetValue<Dictionary<TileEntity, int>>();
@@ -91,18 +87,15 @@ internal class QuickStack
 						(tileEntity.GetTileEntityType() == TileEntityType.Loot || tileEntity.GetTileEntityType() == TileEntityType.SecureLoot || tileEntity.GetTileEntityType() == TileEntityType.SecureLootSigned))
 					{
 						lootWindowGroup.SetTileEntityChest("QUICKSTACK", tileEntity);
-						StashItems(lootContainer, primaryPlayer.bag, lockedSlots, moveKind, controls.MoveStartBottomRight);
+						StashItems(lootContainer, primaryPlayer.bag, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
 						tileEntity.SetModified();
 					}
 				}
 			}
 		}
-
-		for (int i = 0; i < playerControllers.Length; ++i)
-			Traverse.Create(playerControllers[i]).Field("stackLockType").SetValue(locks[i]);
 	}
 
-	//Refactored from the original code to remove stash time due to quick stack/restock
+	//Refactored from the original code to remove stash time due to quick stack/restock and check for custom locks
 	public static ValueTuple<bool, bool> StashItems(XUiC_ItemStackGrid _srcGrid, IInventory _dstInventory, int _ignoredSlots, XUiM_LootContainer.EItemMoveKind _moveKind, bool _startBottomRight)
 	{
 		if (_srcGrid == null || _dstInventory == null)
@@ -117,7 +110,7 @@ internal class QuickStack
 		while (_startBottomRight ? (num >= _ignoredSlots) : (num < itemStackControllers.Length))
 		{
 			XUiC_ItemStack xuiC_ItemStack = (XUiC_ItemStack)itemStackControllers[num];
-			if (!xuiC_ItemStack.StackLock)
+			if (!xuiC_ItemStack.StackLock && Traverse.Create(xuiC_ItemStack).Field("lockType").GetValue<int>() != QuickStack.customLockEnum)
 			{
 				ItemStack itemStack = xuiC_ItemStack.ItemStack;
 				if (!xuiC_ItemStack.ItemStack.IsEmpty())
