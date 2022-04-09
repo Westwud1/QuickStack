@@ -7,9 +7,8 @@ internal class QuickStack
 {
 	public static float lastClickTime = 0;
 	public static int stackRadius = 7;
-	public static XUiC_ItemStack[] lockedSlots;
-	public static int numLockedSlots = 0;
 	public static XUiC_Backpack playerBackpackUi;
+	public static int customLockEnum = (int)XUiC_ItemStack.StackLockTypes.Hidden + 1; //XUiC_ItemStack.StackLockTypes - Last used is Hidden with value 4, so we use 5 for our custom locked slots
 
 	//Quickstack functionality
 	public static void MoveQuickStackRestock(bool quickStack) //true = quickstack; false = quickrestock
@@ -79,34 +78,35 @@ internal class QuickStack
 
 		for (int i = srcItems.Length - 1; i >= 0; --i)
 		{
-			if (itemStackControllers != null && !((XUiC_ItemStack)itemStackControllers[i]).StackLock && lockedSlots[i] != null)
+			if (itemStackControllers != null && ((XUiC_ItemStack)itemStackControllers[i]).StackLock)
 				continue;
 
 			ItemStack itemStack = srcItems[i];
-			if (!itemStack.IsEmpty())
+
+			if (itemStack.IsEmpty())
+				continue;
+
+			int count = itemStack.count;
+			_dstInventory.TryStackItem(0, itemStack);
+			if (itemStack.count > 0 && (_moveKind == XUiM_LootContainer.EItemMoveKind.All || (_moveKind == XUiM_LootContainer.EItemMoveKind.FillAndCreate && _dstInventory.HasItem(itemStack.itemValue))) && _dstInventory.AddItem(itemStack))
 			{
-				int count = itemStack.count;
-				_dstInventory.TryStackItem(0, itemStack);
-				if (itemStack.count > 0 && (_moveKind == XUiM_LootContainer.EItemMoveKind.All || (_moveKind == XUiM_LootContainer.EItemMoveKind.FillAndCreate && _dstInventory.HasItem(itemStack.itemValue))) && _dstInventory.AddItem(itemStack))
-				{
-					itemStack = ItemStack.Empty.Clone();
-				}
-				if (itemStack.count == 0)
-				{
-					itemStack = ItemStack.Empty.Clone();
-				}
+				itemStack = ItemStack.Empty.Clone();
+			}
+			if (itemStack.count == 0)
+			{
+				itemStack = ItemStack.Empty.Clone();
+			}
+			else
+			{
+				item1 = false;
+			}
+			if (itemStack.count != count)
+			{
+				if (itemStackControllers != null)
+					((XUiC_ItemStack)itemStackControllers[i]).ForceSetItemStack(itemStack);
 				else
-				{
-					item1 = false;
-				}
-				if (itemStack.count != count)
-				{
-					if (itemStackControllers != null)
-						((XUiC_ItemStack)itemStackControllers[i]).ForceSetItemStack(itemStack);
-					else
-						dstItems[i] = itemStack;
-					item2 = true;
-				}
+					dstItems[i] = itemStack;
+				item2 = true;
 			}
 		}
 

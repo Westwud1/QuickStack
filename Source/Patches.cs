@@ -11,9 +11,7 @@ internal class Patches
 	{
 		public static void Postfix(XUiC_ContainerStandardControls __instance)
 		{
-			XUiController childById = __instance.GetChildById("btnSort");
-
-			childById = __instance.GetChildById("btnMoveQuickStack");
+			XUiController childById = __instance.GetChildById("btnMoveQuickStack");
 			if (childById != null)
 			{
 				childById.OnPress += delegate (XUiController _sender, int _args)
@@ -135,23 +133,38 @@ internal class Patches
 			__instance.MoveAllowed(out srcGrid, out dstInventory);
 
 			XUiController[] itemStackControllers = srcGrid.GetItemStackControllers();
-			ItemStack[] items = new ItemStack[itemStackControllers.Length - QuickStack.numLockedSlots];
 
+			//Count the number of unlocked slots
+			//We do this so we don't convert back and forth between List<ItemStack> and ItemStack[] since original code uses arrays.
+			int numUnlockedSlots = 0;
+			for (int i = 0; i < itemStackControllers.Length; ++i)
+            {
+				if (Traverse.Create(itemStackControllers[i]).Field("stackLockType").GetValue<XUiC_ItemStack.StackLockTypes>() == XUiC_ItemStack.StackLockTypes.None)
+                {
+					++numUnlockedSlots;
+                }
+			}
+
+			//Create an empty array the size of the backpack minus the locked slots and add every unlocked itemstack
+			ItemStack[] items = new ItemStack[numUnlockedSlots];
 			int j = 0;
 			for (int i = 0; i < itemStackControllers.Length; ++i)
 			{
-				if (QuickStack.lockedSlots[i] == null)
+				if (Traverse.Create(itemStackControllers[i]).Field("stackLockType").GetValue<XUiC_ItemStack.StackLockTypes>() == XUiC_ItemStack.StackLockTypes.None)
 				{
 					items[j++] = ((XUiC_ItemStack)itemStackControllers[i]).ItemStack;
 				}
 			}
 
+			//Combine and sort itemstacks using original code
 			items = StackSortUtil.CombineAndSortStacks(items, 0);
 
+
+			//Add back itemstack in sorted order, skipping through the lock slots.
 			j = 0;
 			for (int i = 0; i < itemStackControllers.Length; ++i)
 			{
-				if (QuickStack.lockedSlots[i] == null)
+				if (Traverse.Create(itemStackControllers[i]).Field("stackLockType").GetValue<XUiC_ItemStack.StackLockTypes>() == XUiC_ItemStack.StackLockTypes.None)
 				{
 					((XUiC_ItemStack)itemStackControllers[i]).ItemStack = items[j++];
 				}
@@ -171,8 +184,6 @@ internal class Patches
 			XUiController[] slots = QuickStack.playerBackpackUi.GetItemStackControllers();
 
 			QuickStack.lastClickTime = 0;
-			QuickStack.lockedSlots = new XUiC_ItemStack[slots.Length];
-			QuickStack.numLockedSlots = 0;
 
 			for (int i = 0; i < slots.Length; ++i)
 			{
@@ -183,20 +194,20 @@ internal class Patches
 
 					if (UICamera.GetKey(KeyCode.LeftAlt))
 					{
-						if (QuickStack.lockedSlots[copy] == itemStack)
+						if (Traverse.Create(itemStack).Field("stackLockType").GetValue<XUiC_ItemStack.StackLockTypes>() == XUiC_ItemStack.StackLockTypes.None)
 						{
-							--QuickStack.numLockedSlots;
-							QuickStack.lockedSlots[copy] = null;
+							Traverse.Create(itemStack).Field("stackLockType").SetValue(QuickStack.customLockEnum);
+							itemStack.RefreshBindings();
 						}
-						else
+						else if (Traverse.Create(itemStack).Field("stackLockType").GetValue<int>() == QuickStack.customLockEnum)
 						{
-							++QuickStack.numLockedSlots;
-							QuickStack.lockedSlots[copy] = itemStack;
+							Traverse.Create(itemStack).Field("stackLockType").SetValue(XUiC_ItemStack.StackLockTypes.None);
+							itemStack.RefreshBindings();
 						}
 
 						//Manager.PlayInsidePlayerHead(StrAudioClip.UITab, -1, 0f, false);
-						Manager.PlayButtonClick();
 						//Manager.PlayXUiSound(audio, 1);
+						Manager.PlayButtonClick();
 					}
 				};
 			}
@@ -234,14 +245,8 @@ internal class Patches
 		[HarmonyPostfix]
 		public static void Postfix(XUiC_ItemStack __instance)
 		{
-			for (int i = 0; i < QuickStack.lockedSlots.Length; ++i)
-			{
-				if (QuickStack.lockedSlots[i] == __instance)
-				{
-					Traverse.Create(__instance).Field("selectionBorderColor").SetValue(new Color32(128, 0, 0, 255));
-					return;
-				}
-			}
+			if (Traverse.Create(__instance).Field("stackLockType").GetValue<int>() == QuickStack.customLockEnum)
+				Traverse.Create(__instance).Field("selectionBorderColor").SetValue(new Color32(128, 0, 0, 255));
 		}
 	}
 
