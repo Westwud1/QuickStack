@@ -16,7 +16,7 @@ internal class Patches
 			{
 				childById.OnPress += delegate (XUiController _sender, int _args)
 				{
-					QuickStack.MoveQuickStackRestock(true);
+					QuickStack.MoveQuickStack(__instance);
 				};
 			}
 
@@ -25,7 +25,7 @@ internal class Patches
 			{
 				childById.OnPress += delegate (XUiController _sender, int _args)
 				{
-					QuickStack.MoveQuickStackRestock(false);
+					QuickStack.MoveQuickRestock(__instance);
 				};
 			}
 		}
@@ -180,6 +180,7 @@ internal class Patches
 	{
 		public static void Postfix(XUiC_BackpackWindow __instance)
 		{
+			QuickStack.backpackWindow = __instance;
 			QuickStack.playerBackpack = Traverse.Create(__instance).Field("backpackGrid").GetValue() as XUiC_Backpack;
 			XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
 
@@ -258,11 +259,11 @@ internal class Patches
 		{
 			if (UICamera.GetKeyDown(KeyCode.Z) && UICamera.GetKey(KeyCode.LeftAlt))
 			{
-				QuickStack.MoveQuickStackRestock(false);
+				//QuickStack.MoveQuickStackRestock(false);
 			}
 			else if (UICamera.GetKeyDown(KeyCode.X) && UICamera.GetKey(KeyCode.LeftAlt))
 			{
-				QuickStack.MoveQuickStackRestock(true);
+				//QuickStack.MoveQuickStackRestock(true);
 			}
 		}
 	}
