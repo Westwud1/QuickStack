@@ -15,6 +15,9 @@ internal class QuickStack
 	//Quickstack functionality
 	public static void MoveQuickStack()
 	{
+		if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.entityId == -1)
+			return;
+
 		float unscaledTime = Time.unscaledTime;
 		XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnly;
 		if (unscaledTime - lastClickTime < 2.0f)
@@ -54,6 +57,9 @@ internal class QuickStack
 	//Restock functionallity
 	public static void MoveQuickRestock()
     {
+		if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.entityId == -1)
+			return;
+
 		float unscaledTime = Time.unscaledTime;
 		XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnly;
 		if (unscaledTime - lastClickTime < 2.0f)
