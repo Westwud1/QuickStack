@@ -11,24 +11,27 @@ internal class Patches
 	{
 		public static void Postfix(XUiC_ContainerStandardControls __instance)
 		{
-			XUiController childById = __instance.GetChildById("btnSort");
+			if (__instance.Parent.Parent is XUiC_BackpackWindow)
+            {
+				QuickStack.playerControls = __instance;
 
-			childById = __instance.GetChildById("btnMoveQuickStack");
-			if (childById != null)
-			{
-				childById.OnPress += delegate (XUiController _sender, int _args)
+				XUiController childById = __instance.GetChildById("btnMoveQuickStack");
+				if (childById != null)
 				{
-					QuickStack.MoveQuickStackRestock(true);
-				};
-			}
+					childById.OnPress += delegate (XUiController _sender, int _args)
+					{
+						QuickStack.MoveQuickStack();
+					};
+				}
 
-			childById = __instance.GetChildById("btnMoveQuickRestock");
-			if (childById != null)
-			{
-				childById.OnPress += delegate (XUiController _sender, int _args)
+				childById = __instance.GetChildById("btnMoveQuickRestock");
+				if (childById != null)
 				{
-					QuickStack.MoveQuickStackRestock(false);
-				};
+					childById.OnPress += delegate (XUiController _sender, int _args)
+					{
+						QuickStack.MoveQuickRestock();
+					};
+				}
 			}
 		}
 	}
@@ -39,18 +42,19 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
-			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
-				return true;
-
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
 			if (__instance.MoveAllowed(out srcGrid, out dstInventory))
 			{
-				ValueTuple<bool, bool> valueTuple = QuickStack.StashItems(GameManager.Instance.World.GetPrimaryPlayer().bag, dstInventory, XUiM_LootContainer.EItemMoveKind.All);
-
-				if (__instance.MoveAllDone != null)
-					__instance.MoveAllDone(valueTuple.Item1, valueTuple.Item2);
+				ValueTuple<bool, bool> valueTuple = QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.All, __instance.MoveStartBottomRight);
+				Action<bool, bool> moveAllDone = __instance.MoveAllDone;
+				if (moveAllDone == null)
+				{
+					return false;
+				}
+				moveAllDone(valueTuple.Item1, valueTuple.Item2);
 			}
+
 			return false;
 		}
 	}
@@ -61,21 +65,17 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
-			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
-				return true;
-
-			XUiC_ItemStackGrid srcGrid;
-			IInventory dstInventory;
-
 			float unscaledTime = Time.unscaledTime;
-			XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnly;
+			XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnlyFirstCreateSecond;
 			if (unscaledTime - QuickStack.lastClickTime < 2.0f)
 				moveKind = XUiM_LootContainer.EItemMoveKind.FillAndCreate;
 			QuickStack.lastClickTime = unscaledTime;
 
+			XUiC_ItemStackGrid srcGrid;
+			IInventory dstInventory;
 			if (__instance.MoveAllowed(out srcGrid, out dstInventory))
 			{
-				QuickStack.StashItems(GameManager.Instance.World.GetPrimaryPlayer().bag, dstInventory, moveKind);
+				QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), moveKind, __instance.MoveStartBottomRight);
 			}
 
 			return false;
@@ -88,15 +88,13 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
-			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
-				return true;
-
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
 			if (__instance.MoveAllowed(out srcGrid, out dstInventory))
 			{
-				QuickStack.StashItems(GameManager.Instance.World.GetPrimaryPlayer().bag, dstInventory, XUiM_LootContainer.EItemMoveKind.FillOnly);
+				QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.FillOnly, __instance.MoveStartBottomRight);
 			}
+
 			return false;
 		}
 	}
@@ -107,14 +105,11 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
-			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
-				return true;
-
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
 			if (__instance.MoveAllowed(out srcGrid, out dstInventory))
 			{
-				QuickStack.StashItems(GameManager.Instance.World.GetPrimaryPlayer().bag, dstInventory, XUiM_LootContainer.EItemMoveKind.FillAndCreate);
+				QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.FillAndCreate, __instance.MoveStartBottomRight);
 			}
 
 			return false;
@@ -127,31 +122,42 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
-			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
-				return true;
-
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
 			__instance.MoveAllowed(out srcGrid, out dstInventory);
 
 			XUiController[] itemStackControllers = srcGrid.GetItemStackControllers();
-			ItemStack[] items = new ItemStack[itemStackControllers.Length - QuickStack.numLockedSlots];
 
+			//Count the number of unlocked slots
+			//We do this so we don't convert back and forth between List<ItemStack> and ItemStack[] since original code uses arrays.
+			int numUnlockedSlots = 0;
+			for (int i = 0; i < itemStackControllers.Length; ++i)
+            {
+				if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
+                {
+					++numUnlockedSlots;
+                }
+			}
+
+			//Create an empty array the size of the backpack minus the locked slots and add every unlocked itemstack
+			ItemStack[] items = new ItemStack[numUnlockedSlots];
 			int j = 0;
 			for (int i = 0; i < itemStackControllers.Length; ++i)
 			{
-				if (QuickStack.lockedSlots[i] == null)
+				if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
 				{
 					items[j++] = ((XUiC_ItemStack)itemStackControllers[i]).ItemStack;
 				}
 			}
 
+			//Combine and sort itemstacks using original code
 			items = StackSortUtil.CombineAndSortStacks(items, 0);
 
+			//Add back itemstack in sorted order, skipping through the lock slots.
 			j = 0;
 			for (int i = 0; i < itemStackControllers.Length; ++i)
 			{
-				if (QuickStack.lockedSlots[i] == null)
+				if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
 				{
 					((XUiC_ItemStack)itemStackControllers[i]).ItemStack = items[j++];
 				}
@@ -167,12 +173,11 @@ internal class Patches
 	{
 		public static void Postfix(XUiC_BackpackWindow __instance)
 		{
-			QuickStack.playerBackpackUi = Traverse.Create(__instance).Field("backpackGrid").GetValue() as XUiC_Backpack;
-			XUiController[] slots = QuickStack.playerBackpackUi.GetItemStackControllers();
+			QuickStack.backpackWindow = __instance;
+			QuickStack.playerBackpack = Traverse.Create(__instance).Field("backpackGrid").GetValue() as XUiC_Backpack;
+			XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
 
 			QuickStack.lastClickTime = 0;
-			QuickStack.lockedSlots = new XUiC_ItemStack[slots.Length];
-			QuickStack.numLockedSlots = 0;
 
 			for (int i = 0; i < slots.Length; ++i)
 			{
@@ -183,20 +188,20 @@ internal class Patches
 
 					if (UICamera.GetKey(KeyCode.LeftAlt))
 					{
-						if (QuickStack.lockedSlots[copy] == itemStack)
+						if (Traverse.Create(itemStack).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None)
 						{
-							--QuickStack.numLockedSlots;
-							QuickStack.lockedSlots[copy] = null;
+							Traverse.Create(itemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
+							itemStack.RefreshBindings();
 						}
-						else
+						else if (Traverse.Create(itemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
 						{
-							++QuickStack.numLockedSlots;
-							QuickStack.lockedSlots[copy] = itemStack;
+							Traverse.Create(itemStack).Field("lockType").SetValue(XUiC_ItemStack.LockTypes.None);
+							itemStack.RefreshBindings();
 						}
 
 						//Manager.PlayInsidePlayerHead(StrAudioClip.UITab, -1, 0f, false);
-						Manager.PlayButtonClick();
 						//Manager.PlayXUiSound(audio, 1);
+						Manager.PlayButtonClick();
 					}
 				};
 			}
@@ -229,35 +234,31 @@ internal class Patches
 
 	//This patch is used to update the slot color in the backpack if the slot is locked by the player.
 	[HarmonyPatch(typeof(XUiC_ItemStack), "updateBorderColor")]
-	private class QS_9
+	private class QS_10
 	{
 		[HarmonyPostfix]
 		public static void Postfix(XUiC_ItemStack __instance)
 		{
-			for (int i = 0; i < QuickStack.lockedSlots.Length; ++i)
-			{
-				if (QuickStack.lockedSlots[i] == __instance)
-				{
-					Traverse.Create(__instance).Field("selectionBorderColor").SetValue(new Color32(128, 0, 0, 255));
-					return;
-				}
-			}
+			if (Traverse.Create(__instance).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
+				Traverse.Create(__instance).Field("selectionBorderColor").SetValue(new Color32(128, 0, 0, 255));
 		}
 	}
 
-	//User QuickStack functionallity by pressing backslash (useful if other mods remove the QuickStack button)
+	//QuickStack and Restock functionallity by pressing hotkeys (useful if other mods remove the UI buttons)
 	[HarmonyPatch(typeof(GameManager), "UpdateTick")]
-	private class QS_10
+	private class QS_11
 	{
 		public static void Postfix(EntityPlayerLocal __instance)
 		{
 			if (UICamera.GetKeyDown(KeyCode.Z) && UICamera.GetKey(KeyCode.LeftAlt))
 			{
-				QuickStack.MoveQuickStackRestock(false);
+				QuickStack.MoveQuickRestock();
+				Manager.PlayButtonClick();
 			}
 			else if (UICamera.GetKeyDown(KeyCode.X) && UICamera.GetKey(KeyCode.LeftAlt))
 			{
-				QuickStack.MoveQuickStackRestock(true);
+				QuickStack.MoveQuickStack();
+				Manager.PlayButtonClick();
 			}
 		}
 	}
