@@ -7,7 +7,7 @@ internal class Patches
 {
 	//This patch is used to initialize the UI functionallity for the quickstack and restock buttons.
 	[HarmonyPatch(typeof(XUiC_ContainerStandardControls), "Init")]
-	private class QS_1
+	private class QS_01
 	{
 		public static void Postfix(XUiC_ContainerStandardControls __instance)
 		{
@@ -38,7 +38,7 @@ internal class Patches
 
 	//This patch overrides the original one to accommodate the locked slots.
 	[HarmonyPatch(typeof(XUiC_ContainerStandardControls), "MoveAll")]
-	private class QS_2
+	private class QS_02
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
@@ -64,7 +64,7 @@ internal class Patches
 
 	//This patch overrides the original one to accommodate the locked slots. 
 	[HarmonyPatch(typeof(XUiC_ContainerStandardControls), "MoveFillAndSmart")]
-	private class QS_3
+	private class QS_03
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
@@ -90,7 +90,7 @@ internal class Patches
 
 	//This patch overrides the original one to accommodate the locked slots. 
 	[HarmonyPatch(typeof(XUiC_ContainerStandardControls), "MoveFillStacks")]
-	private class QS_4
+	private class QS_04
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
@@ -110,7 +110,7 @@ internal class Patches
 
 	//This patch overrides the original one to accommodate the locked slots. 
 	[HarmonyPatch(typeof(XUiC_ContainerStandardControls), "MoveSmart")]
-	private class QS_5
+	private class QS_05
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
@@ -130,12 +130,14 @@ internal class Patches
 
 	//This patch overrides the original one to accommodate the locked slots. 
 	[HarmonyPatch(typeof(XUiC_ContainerStandardControls), "Sort")]
-	private class QS_6
+	private class QS_06
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
 			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
 				return true;
+
+			int lockedSlots = Traverse.Create(QuickStack.playerControls).Field("stashLockedSlots").GetValue<int>();
 
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
@@ -146,7 +148,7 @@ internal class Patches
 			//Count the number of unlocked slots
 			//We do this so we don't convert back and forth between List<ItemStack> and ItemStack[] since original code uses arrays.
 			int numUnlockedSlots = 0;
-			for (int i = 0; i < itemStackControllers.Length; ++i)
+			for (int i = lockedSlots; i < itemStackControllers.Length; ++i)
             {
 				if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
                 {
@@ -157,7 +159,7 @@ internal class Patches
 			//Create an empty array the size of the backpack minus the locked slots and add every unlocked itemstack
 			ItemStack[] items = new ItemStack[numUnlockedSlots];
 			int j = 0;
-			for (int i = 0; i < itemStackControllers.Length; ++i)
+			for (int i = lockedSlots; i < itemStackControllers.Length; ++i)
 			{
 				if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
 				{
@@ -170,7 +172,7 @@ internal class Patches
 
 			//Add back itemstack in sorted order, skipping through the lock slots.
 			j = 0;
-			for (int i = 0; i < itemStackControllers.Length; ++i)
+			for (int i = lockedSlots; i < itemStackControllers.Length; ++i)
 			{
 				if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
 				{
@@ -184,7 +186,7 @@ internal class Patches
 
 	//This patch is used to initialize the functionallity for the slot locking mechanism.
 	[HarmonyPatch(typeof(XUiC_BackpackWindow), "Init")]
-	private class QS_7
+	private class QS_07
 	{
 		public static void Postfix(XUiC_BackpackWindow __instance)
 		{
@@ -226,7 +228,7 @@ internal class Patches
 	//This patch is used to add a binding to know whether the player is not accessing other loot container inventories with some exceptions like workstations.
 	//This is used in the xml file to make the quickstack icon visible only when the player inventory is open.
 	[HarmonyPatch(typeof(XUiC_BackpackWindow), "GetBindingValue")]
-	private class QS_8
+	private class QS_08
 	{
 		public static void Postfix(ref bool __result, XUiC_BackpackWindow __instance, ref string value, string bindingName)
 		{
@@ -249,7 +251,7 @@ internal class Patches
 
 	//This patch is used to update the slot color in the backpack if the slot is locked by the player.
 	[HarmonyPatch(typeof(XUiC_ItemStack), "updateBorderColor")]
-	private class QS_10
+	private class QS_09
 	{
 		[HarmonyPostfix]
 		public static void Postfix(XUiC_ItemStack __instance)
@@ -261,7 +263,7 @@ internal class Patches
 
 	//QuickStack and Restock functionallity by pressing hotkeys (useful if other mods remove the UI buttons)
 	[HarmonyPatch(typeof(GameManager), "UpdateTick")]
-	private class QS_11
+	private class QS_10
 	{
 		public static void Postfix(EntityPlayerLocal __instance)
 		{
