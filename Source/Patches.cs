@@ -42,6 +42,9 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
+			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
+				return true;
+
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
 			if (__instance.MoveAllowed(out srcGrid, out dstInventory))
@@ -65,6 +68,9 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
+			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
+				return true;
+
 			float unscaledTime = Time.unscaledTime;
 			XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnlyFirstCreateSecond;
 			if (unscaledTime - QuickStack.lastClickTime < 2.0f)
@@ -88,6 +94,9 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
+			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
+				return true;
+
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
 			if (__instance.MoveAllowed(out srcGrid, out dstInventory))
@@ -105,6 +114,9 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
+			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
+				return true;
+
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
 			if (__instance.MoveAllowed(out srcGrid, out dstInventory))
@@ -122,6 +134,9 @@ internal class Patches
 	{
 		public static bool Prefix(XUiC_ContainerStandardControls __instance)
 		{
+			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
+				return true;
+
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
 			__instance.MoveAllowed(out srcGrid, out dstInventory);

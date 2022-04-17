@@ -2,8 +2,8 @@
 <xml>
 	<ModInfo>
 		<Name value="QuickStack" />
-		<Description value="Enables the player to quickly deposit items from their inventory to nearby containers without the need to open them. Enables the player to lock specific slots." />
+		<Description value="Enables the player to quickly deposit/restock items from their inventory to nearby containers without the need to open them. Enables the player to lock specific slots." />
 		<Author value="Westwud" />
-		<Version value="1.5.1" />
+		<Version value="1.5.2" />
 	</ModInfo>
 </xml>
