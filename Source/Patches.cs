@@ -2,6 +2,7 @@
 using Audio;
 using HarmonyLib;
 using UnityEngine;
+using System.Collections.Generic;
 
 internal class Patches
 {
@@ -20,7 +21,23 @@ internal class Patches
 				{
 					childById.OnPress += delegate (XUiController _sender, int _args)
 					{
-						QuickStack.MoveQuickStack();
+            if (ConnectionManager.Instance.IsSinglePlayer) {
+							var player  = GameManager.Instance.persistentLocalPlayer;
+							QuickStack.MoveQuickStack();
+            } else if(!ConnectionManager.Instance.IsServer) {
+							ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageFindOpenableContainers>().Setup(GameManager.Instance.World.GetPrimaryPlayerId(), _forStacking: true));
+						} else if(!GameManager.IsDedicatedServer) {
+							// TODO: could be cleaned up a bit...
+							var player = GameManager.Instance.World.GetPrimaryPlayer();
+							var center = new Vector3i(player.position);
+							List<Vector3i> offsets = new List<Vector3i>(1024);
+							foreach(var pair in QuickStack.FindNearbyLootContainers(center, QuickStack.stackRadius, player.entityId)) {
+								offsets.Add(pair.Item1);
+              }
+							QuickStack.ClientMoveQuickStack(center, offsets);
+
+						}
+						
 					};
 				}
 
@@ -29,7 +46,21 @@ internal class Patches
 				{
 					childById.OnPress += delegate (XUiController _sender, int _args)
 					{
-						QuickStack.MoveQuickRestock();
+            if (ConnectionManager.Instance.IsSinglePlayer) {
+							QuickStack.MoveQuickRestock();
+            } else if(!ConnectionManager.Instance.IsServer) {
+							ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageFindOpenableContainers>().Setup(GameManager.Instance.World.GetPrimaryPlayerId(), _forStacking: false));
+						} else if (!GameManager.IsDedicatedServer) {
+							var player = GameManager.Instance.World.GetPrimaryPlayer();
+							var center = new Vector3i(player.position);
+							List<Vector3i> offsets = new List<Vector3i>(1024);
+							foreach (var pair in QuickStack.FindNearbyLootContainers(center, QuickStack.stackRadius, player.entityId)) {
+								offsets.Add(pair.Item1);
+							}
+							QuickStack.ClientMoveQuickRestock(center, offsets);
+
+						}
+
 					};
 				}
 			}
