@@ -3,6 +3,7 @@
 // Net Package for sending a list of container entities
 public abstract class NetPackageInvManageAction : NetPackage {
   public override NetPackageDirection PackageDirection => NetPackageDirection.Both;
+  public override bool AllowedBeforeAuth => false;
 
   protected NetPackageInvManageAction Setup(Vector3i _center, List<Vector3i> _containerEntities) {
     center = _center;
@@ -10,6 +11,7 @@ public abstract class NetPackageInvManageAction : NetPackage {
     return this;
   }
 
+  // Requantizes Vector3i to a 3-bytes. Requires -128 < x, y, z <= 128 
   protected static void WriteOptimized(PooledBinaryWriter _writer, Vector3i ivec3) {
     _writer.Write((sbyte)ivec3.x);
     _writer.Write((sbyte)ivec3.y);
@@ -24,6 +26,7 @@ public abstract class NetPackageInvManageAction : NetPackage {
     };
   }
 
+  // Vector3i without any requantization. Full range, but takes up 4x more space
   protected static void Write(PooledBinaryWriter _writer, Vector3i ivec3) {
     _writer.Write(ivec3.x);
     _writer.Write(ivec3.y);

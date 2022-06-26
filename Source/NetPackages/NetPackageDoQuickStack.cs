@@ -4,12 +4,11 @@
 // Informs client it is safe to quick stack/restock
 // To a list of containers
 class NetPackageDoQuickStack : NetPackageInvManageAction {
-
   public override NetPackageDirection PackageDirection => NetPackageDirection.ToClient;
 
-  public NetPackageDoQuickStack Setup(Vector3i _center, List<Vector3i> _containerEntities, bool _forStacking) {
+  public NetPackageDoQuickStack Setup(Vector3i _center, List<Vector3i> _containerEntities, QuickStackType _type) {
     Setup(_center,_containerEntities);
-    forStacking = _forStacking;
+    type = _type;
     return this;
   }
 
@@ -18,14 +17,21 @@ class NetPackageDoQuickStack : NetPackageInvManageAction {
   }
 
   public override void ProcessPackage(World _world, GameManager _callbacks) {
-    if(containerEntities == null || _world == null) {
+    if(containerEntities == null || _world == null || containerEntities.Count == 0) {
       return;
     }
 
-    if (forStacking) {
-      QuickStack.ClientMoveQuickStack(center, containerEntities);
-    } else {
-      QuickStack.ClientMoveQuickRestock(center, containerEntities);
+    switch (type) {
+      case QuickStackType.Stack:
+        QuickStack.ClientMoveQuickStack(center, containerEntities);
+        break;
+
+      case QuickStackType.Restock:
+        QuickStack.ClientMoveQuickRestock(center, containerEntities);
+        break;
+
+      default:
+        break;
     }
 
     ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageUnlockContainers>().Setup(center, containerEntities));
@@ -33,13 +39,13 @@ class NetPackageDoQuickStack : NetPackageInvManageAction {
 
   public override void read(PooledBinaryReader _reader) {
     base.read(_reader);
-    forStacking = _reader.ReadBoolean();
+    type = (QuickStackType)_reader.ReadByte();
   }
 
   public override void write(PooledBinaryWriter _writer) {
     base.write(_writer);
-    _writer.Write(forStacking);
+    _writer.Write((byte)type);
   }
 
-  protected bool forStacking;
+  protected QuickStackType type;
 }

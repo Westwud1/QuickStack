@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
 
+// Client => Server
+// Requests a list of containers that are safe to modify
 class NetPackageFindOpenableContainers : NetPackage {
   public override NetPackageDirection PackageDirection => NetPackageDirection.ToServer;
+  public override bool AllowedBeforeAuth => false;
 
-  public NetPackageFindOpenableContainers Setup(int _playerEntityId, bool _forStacking) {
+  public NetPackageFindOpenableContainers Setup(int _playerEntityId, QuickStackType _type) {
     playerEntityId = _playerEntityId;
-    forStacking = _forStacking;
+    type = _type;
     return this;
   }
 
@@ -18,6 +21,10 @@ class NetPackageFindOpenableContainers : NetPackage {
       return;
     }
 
+    if(type >= QuickStackType.Count || type < QuickStackType.Stack) {
+      return;
+    }
+
     if (!_world.Players.dict.TryGetValue(playerEntityId, out var playerEntity) || playerEntity == null) {
       return;
     }
@@ -27,15 +34,15 @@ class NetPackageFindOpenableContainers : NetPackage {
       return;
     }
 
-    var lockedTileEntities = QuickStack.GetLockedTiles();
+    var lockedTileEntities = QuickStack.GetOpenedTiles();
     if (lockedTileEntities == null) {
       return;
     }
 
-    List<Vector3i> openableEntities = new List<Vector3i>(1024);
+    List<Vector3i> openableEntities = new List<Vector3i>(256);
 
     var center = new Vector3i(playerEntity.position);
-    foreach (var centerEntityPair in QuickStack.FindNearbyLootContainers(center, QuickStack.stackRadius, playerEntityId)) {
+    foreach (var centerEntityPair in QuickStack.FindNearbyLootContainers(center, playerEntityId)) {
       if(centerEntityPair.Item2 == null) {
         continue;
       }
@@ -43,20 +50,22 @@ class NetPackageFindOpenableContainers : NetPackage {
       lockedTileEntities.Add(centerEntityPair.Item2, playerEntityId);
     }
 
-    cinfo.SendPackage(NetPackageManager.GetPackage<NetPackageDoQuickStack>().Setup(center, openableEntities, forStacking));
+    if(openableEntities.Count > 0) {
+      cinfo.SendPackage(NetPackageManager.GetPackage<NetPackageDoQuickStack>().Setup(center, openableEntities, type));
+    }
   }
 
   public override void read(PooledBinaryReader _reader) {
     playerEntityId = _reader.ReadInt32();
-    forStacking = _reader.ReadBoolean();
+    type = (QuickStackType)_reader.ReadByte();
   }
 
   public override void write(PooledBinaryWriter _writer) {
     base.write(_writer);
     _writer.Write(playerEntityId);
-    _writer.Write(forStacking);
+    _writer.Write((byte)type);
   }
 
   protected int playerEntityId;
-  protected bool forStacking;
+  protected QuickStackType type;
 }

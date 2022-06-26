@@ -2,7 +2,6 @@
 using Audio;
 using HarmonyLib;
 using UnityEngine;
-using System.Collections.Generic;
 
 internal class Patches
 {
@@ -21,23 +20,7 @@ internal class Patches
 				{
 					childById.OnPress += delegate (XUiController _sender, int _args)
 					{
-            if (ConnectionManager.Instance.IsSinglePlayer) {
-							var player  = GameManager.Instance.persistentLocalPlayer;
-							QuickStack.MoveQuickStack();
-            } else if(!ConnectionManager.Instance.IsServer) {
-							ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageFindOpenableContainers>().Setup(GameManager.Instance.World.GetPrimaryPlayerId(), _forStacking: true));
-						} else if(!GameManager.IsDedicatedServer) {
-							// TODO: could be cleaned up a bit...
-							var player = GameManager.Instance.World.GetPrimaryPlayer();
-							var center = new Vector3i(player.position);
-							List<Vector3i> offsets = new List<Vector3i>(1024);
-							foreach(var pair in QuickStack.FindNearbyLootContainers(center, QuickStack.stackRadius, player.entityId)) {
-								offsets.Add(pair.Item1);
-              }
-							QuickStack.ClientMoveQuickStack(center, offsets);
-
-						}
-						
+						QuickStack.QuickStackOnClick();
 					};
 				}
 
@@ -46,21 +29,7 @@ internal class Patches
 				{
 					childById.OnPress += delegate (XUiController _sender, int _args)
 					{
-            if (ConnectionManager.Instance.IsSinglePlayer) {
-							QuickStack.MoveQuickRestock();
-            } else if(!ConnectionManager.Instance.IsServer) {
-							ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageFindOpenableContainers>().Setup(GameManager.Instance.World.GetPrimaryPlayerId(), _forStacking: false));
-						} else if (!GameManager.IsDedicatedServer) {
-							var player = GameManager.Instance.World.GetPrimaryPlayer();
-							var center = new Vector3i(player.position);
-							List<Vector3i> offsets = new List<Vector3i>(1024);
-							foreach (var pair in QuickStack.FindNearbyLootContainers(center, QuickStack.stackRadius, player.entityId)) {
-								offsets.Add(pair.Item1);
-							}
-							QuickStack.ClientMoveQuickRestock(center, offsets);
-
-						}
-
+						QuickStack.QuickRestockOnClick();
 					};
 				}
 			}
@@ -102,11 +71,10 @@ internal class Patches
 			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
 				return true;
 
-			float unscaledTime = Time.unscaledTime;
-			XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnlyFirstCreateSecond;
-			if (unscaledTime - QuickStack.lastClickTime < 2.0f)
-				moveKind = XUiM_LootContainer.EItemMoveKind.FillAndCreate;
-			QuickStack.lastClickTime = unscaledTime;
+			var moveKind = QuickStack.GetMoveKind();
+			if(moveKind == XUiM_LootContainer.EItemMoveKind.FillOnly) {
+				moveKind = XUiM_LootContainer.EItemMoveKind.FillOnlyFirstCreateSecond;
+			}
 
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
@@ -225,7 +193,7 @@ internal class Patches
 			QuickStack.playerBackpack = Traverse.Create(__instance).Field("backpackGrid").GetValue() as XUiC_Backpack;
 			XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
 
-			QuickStack.lastClickTime = 0;
+			QuickStack.lastClickTimes.Fill(0.0f);
 
 			for (int i = 0; i < slots.Length; ++i)
 			{
@@ -300,12 +268,12 @@ internal class Patches
 		{
 			if (UICamera.GetKeyDown(KeyCode.Z) && UICamera.GetKey(KeyCode.LeftAlt))
 			{
-				QuickStack.MoveQuickRestock();
+				QuickStack.QuickRestockOnClick();
 				Manager.PlayButtonClick();
 			}
 			else if (UICamera.GetKeyDown(KeyCode.X) && UICamera.GetKey(KeyCode.LeftAlt))
 			{
-				QuickStack.MoveQuickStack();
+				QuickStack.QuickStackOnClick();
 				Manager.PlayButtonClick();
 			}
 		}

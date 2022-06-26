@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 
+// Client => Server
+// Notifies server that containers are no longer in-use
 class NetPackageUnlockContainers : NetPackageInvManageAction {
   public override NetPackageDirection PackageDirection => NetPackageDirection.ToServer;
 
@@ -13,7 +15,7 @@ class NetPackageUnlockContainers : NetPackageInvManageAction {
       return;
     }
 
-    var lockedTileEntities = QuickStack.GetLockedTiles();
+    var lockedTileEntities = QuickStack.GetOpenedTiles();
     if (lockedTileEntities == null) {
       return;
     }
