@@ -20,7 +20,7 @@ internal class Patches
 				{
 					childById.OnPress += delegate (XUiController _sender, int _args)
 					{
-						QuickStack.MoveQuickStack();
+						QuickStack.QuickStackOnClick();
 					};
 				}
 
@@ -29,7 +29,7 @@ internal class Patches
 				{
 					childById.OnPress += delegate (XUiController _sender, int _args)
 					{
-						QuickStack.MoveQuickRestock();
+						QuickStack.QuickRestockOnClick();
 					};
 				}
 			}
@@ -71,11 +71,10 @@ internal class Patches
 			if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
 				return true;
 
-			float unscaledTime = Time.unscaledTime;
-			XUiM_LootContainer.EItemMoveKind moveKind = XUiM_LootContainer.EItemMoveKind.FillOnlyFirstCreateSecond;
-			if (unscaledTime - QuickStack.lastClickTime < 2.0f)
-				moveKind = XUiM_LootContainer.EItemMoveKind.FillAndCreate;
-			QuickStack.lastClickTime = unscaledTime;
+			var moveKind = QuickStack.GetMoveKind();
+			if(moveKind == XUiM_LootContainer.EItemMoveKind.FillOnly) {
+				moveKind = XUiM_LootContainer.EItemMoveKind.FillOnlyFirstCreateSecond;
+			}
 
 			XUiC_ItemStackGrid srcGrid;
 			IInventory dstInventory;
@@ -194,7 +193,7 @@ internal class Patches
 			QuickStack.playerBackpack = Traverse.Create(__instance).Field("backpackGrid").GetValue() as XUiC_Backpack;
 			XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
 
-			QuickStack.lastClickTime = 0;
+			QuickStack.lastClickTimes.Fill(0.0f);
 
 			for (int i = 0; i < slots.Length; ++i)
 			{
@@ -269,12 +268,12 @@ internal class Patches
 		{
 			if (UICamera.GetKeyDown(KeyCode.Z) && UICamera.GetKey(KeyCode.LeftAlt))
 			{
-				QuickStack.MoveQuickRestock();
+				QuickStack.QuickRestockOnClick();
 				Manager.PlayButtonClick();
 			}
 			else if (UICamera.GetKeyDown(KeyCode.X) && UICamera.GetKey(KeyCode.LeftAlt))
 			{
-				QuickStack.MoveQuickStack();
+				QuickStack.QuickStackOnClick();
 				Manager.PlayButtonClick();
 			}
 		}
