@@ -44,10 +44,7 @@ internal class QuickStack
             // Handle Host
             if (!GameManager.IsDedicatedServer && _entityIdThatOpenedIt == GameManager.Instance.World.GetPrimaryPlayerId())
             {
-                var localPlayer = GameManager.Instance.persistentLocalPlayer;
-                // Note: The session can decide whether or not it routes through Epic Online Services, and therefore not write down Steam IDs
-                // I'm not sure which identifier is correct to work in both cases, so we're using both here.
-                if (!(lootContainer.IsUserAllowed(localPlayer.UserIdentifier) || lootContainer.IsUserAllowed(localPlayer.PlatformUserIdentifier)))
+                if (!lootContainer.IsUserAllowed(GameManager.Instance.persistentLocalPlayer.UserIdentifier))
                 {
                     return false;
                 }
@@ -56,8 +53,7 @@ internal class QuickStack
             {
                 // Handle Client
                 var cinfo = ConnectionManager.Instance.Clients.ForEntityId(_entityIdThatOpenedIt);
-
-                if (cinfo != null && !(lootContainer.IsUserAllowed(cinfo.CrossplatformId) || lootContainer.IsUserAllowed(cinfo.PlatformId)))
+                if (cinfo == null || !lootContainer.IsUserAllowed(cinfo.CrossplatformId))
                 {
                     return false;
                 }
