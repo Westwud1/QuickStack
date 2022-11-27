@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Audio;
 using HarmonyLib;
 using UnityEngine;
@@ -184,7 +185,7 @@ internal class Patches
         }
     }
 
-    //This patch is used to initialize the functionallity for the slot locking mechanism.
+    //This patch is used to initialize the functionallity for the slot locking mechanism and load saved locked slots.
     [HarmonyPatch(typeof(XUiC_BackpackWindow), "Init")]
     private class QS_07
     {
@@ -198,28 +199,30 @@ internal class Patches
 
             for (int i = 0; i < slots.Length; ++i)
             {
-                int copy = i;
                 slots[i].OnPress += (XUiController _sender, int _mouseButton) =>
                 {
+                    for (int j = 0; j < QuickStack.quickStackHotkeys.Length - 1; j++)
+                    {
+                        if (!UICamera.GetKey(QuickStack.quickLockHotkeys[j]))
+                            return;
+                    }
+
                     XUiC_ItemStack itemStack = _sender as XUiC_ItemStack;
 
-                    if (UICamera.GetKey(KeyCode.LeftAlt))
+                    if (Traverse.Create(itemStack).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None)
                     {
-                        if (Traverse.Create(itemStack).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None)
-                        {
-                            Traverse.Create(itemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
-                            itemStack.RefreshBindings();
-                        }
-                        else if (Traverse.Create(itemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
-                        {
-                            Traverse.Create(itemStack).Field("lockType").SetValue(XUiC_ItemStack.LockTypes.None);
-                            itemStack.RefreshBindings();
-                        }
-
-                        //Manager.PlayInsidePlayerHead(StrAudioClip.UITab, -1, 0f, false);
-                        //Manager.PlayXUiSound(audio, 1);
-                        Manager.PlayButtonClick();
+                        Traverse.Create(itemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
+                        itemStack.RefreshBindings();
                     }
+                    else if (Traverse.Create(itemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
+                    {
+                        Traverse.Create(itemStack).Field("lockType").SetValue(XUiC_ItemStack.LockTypes.None);
+                        itemStack.RefreshBindings();
+                    }
+
+                    //Manager.PlayInsidePlayerHead(StrAudioClip.UITab, -1, 0f, false);
+                    //Manager.PlayXUiSound(audio, 1);
+                    Manager.PlayButtonClick();
                 };
             }
         }
@@ -267,15 +270,83 @@ internal class Patches
     {
         public static void Postfix(EntityPlayerLocal __instance)
         {
-            if (UICamera.GetKeyDown(KeyCode.Z) && UICamera.GetKey(KeyCode.LeftAlt))
+            if (UICamera.GetKeyDown(QuickStack.quickStackHotkeys[QuickStack.quickStackHotkeys.Length - 1]))
             {
+                for (int i = 0; i < QuickStack.quickStackHotkeys.Length - 1; i++)
+                {
+                    if (!UICamera.GetKey(QuickStack.quickStackHotkeys[i]))
+                        return;
+                }
+
+                QuickStack.QuickStackOnClick();
+                Manager.PlayButtonClick();
+            }
+            else if (UICamera.GetKeyDown(QuickStack.quickRestockHotkeys[QuickStack.quickRestockHotkeys.Length - 1]))
+            {
+                for (int i = 0; i < QuickStack.quickRestockHotkeys.Length - 1; i++)
+                {
+                    if (!UICamera.GetKey(QuickStack.quickRestockHotkeys[i]))
+                        return;
+                }
+
                 QuickStack.QuickRestockOnClick();
                 Manager.PlayButtonClick();
             }
-            else if (UICamera.GetKeyDown(KeyCode.X) && UICamera.GetKey(KeyCode.LeftAlt))
+        }
+    }
+
+    //Save locked slots
+    [HarmonyPatch(typeof(GameManager), "SaveLocalPlayerData")]
+    private class QS_11
+    {
+        public static void Postfix()
+        {
+            try
             {
-                QuickStack.QuickStackOnClick();
-                Manager.PlayButtonClick();
+                XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
+
+                using (BinaryWriter binWriter = new BinaryWriter(File.Open(QuickStack.lockedSlotsFile(), FileMode.Create)))
+                {
+                    binWriter.Write(Traverse.Create(QuickStack.playerControls).Field("stashLockedSlots").GetValue<int>());
+
+                    binWriter.Write(slots.Length);
+                    for (int i = 0; i < slots.Length; i++)
+                        binWriter.Write(Traverse.Create(slots[i] as XUiC_ItemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum);
+                }
+            }
+            catch
+            {
+
+            }
+        }
+    }
+
+    //Load locked slots
+    [HarmonyPatch(typeof(GameManager), "setLocalPlayerEntity")]
+    private class QS_12
+    {
+        public static void Postfix()
+        {
+            try
+            {
+                using (BinaryReader binReader = new BinaryReader(File.Open(QuickStack.lockedSlotsFile(), FileMode.Open)))
+                {
+                    XUiC_ComboBoxInt comboBox = QuickStack.playerControls.GetChildById("cbxLockedSlots") as XUiC_ComboBoxInt;
+                    comboBox.Value = binReader.ReadInt32();
+
+                    int savedLockedSlots = binReader.ReadInt32();
+
+                    XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
+                    for (int i = 0; i < Math.Min(savedLockedSlots, slots.Length); i++)
+                    {
+                        if (binReader.ReadBoolean())
+                            Traverse.Create(slots[i] as XUiC_ItemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
+                    }
+                }
+            }
+            catch
+            {
+
             }
         }
     }

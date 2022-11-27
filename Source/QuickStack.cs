@@ -18,6 +18,14 @@ internal class QuickStack
     public static XUiC_BackpackWindow backpackWindow;
     public static XUiC_ContainerStandardControls playerControls;
     public static int customLockEnum = (int)XUiC_ItemStack.LockTypes.Burning + 1; //XUiC_ItemStack.LockTypes - Last used is Burning with value 5, so we use 6 for our custom locked slots
+    public static KeyCode[] quickLockHotkeys;
+    public static KeyCode[] quickStackHotkeys;
+    public static KeyCode[] quickRestockHotkeys;
+
+    public static string lockedSlotsFile()
+    {
+        return GameIO.GetPlayerDataDir() + "/" + GameManager.Instance.persistentLocalPlayer.UserIdentifier + ".qsls";
+    }
 
     public static Dictionary<TileEntity, int> GetOpenedTiles()
     {
@@ -76,8 +84,8 @@ internal class QuickStack
     public static bool IsValidLoot(TileEntityLootContainer _tileEntity)
     {
         return (_tileEntity.GetTileEntityType() == TileEntityType.Loot ||
-            _tileEntity.GetTileEntityType() == TileEntityType.SecureLoot ||
-            _tileEntity.GetTileEntityType() == TileEntityType.SecureLootSigned);
+                _tileEntity.GetTileEntityType() == TileEntityType.SecureLoot ||
+                _tileEntity.GetTileEntityType() == TileEntityType.SecureLootSigned);
     }
 
     // Yields all openable loot containers in a cubic radius about a point
@@ -115,7 +123,9 @@ internal class QuickStack
         lastClickTimes[(int)_type] = unscaledTime;
 
         if (unscaledTime - lastClickTime < 2.0f)
+        {
             return XUiM_LootContainer.EItemMoveKind.FillAndCreate;
+        }
         else
         {
             return XUiM_LootContainer.EItemMoveKind.FillOnly;
@@ -227,19 +237,15 @@ internal class QuickStack
         }
     }
 
-
     public static void ClientMoveQuickRestock(Vector3i center, IEnumerable<Vector3i> _entityContainers)
     {
         if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.entityId == -1)
             return;
 
-
         var moveKind = GetMoveKind(QuickStackType.Restock);
 
         if (_entityContainers == null)
-        {
             return;
-        }
 
         EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
         LocalPlayerUI playerUI = LocalPlayerUI.GetUIForPlayer(primaryPlayer);
@@ -251,9 +257,8 @@ internal class QuickStack
         foreach (var offset in _entityContainers)
         {
             if (!(GameManager.Instance.World.GetTileEntity(0, center + offset) is TileEntityLootContainer tileEntity))
-            {
                 continue;
-            }
+
             lootWindowGroup.SetTileEntityChest("QUICKSTACK", tileEntity);
             StashItems(lootContainer, primaryPlayer.bag, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
             tileEntity.SetModified();
