@@ -315,7 +315,7 @@ internal class Patches
                         binWriter.Write(Traverse.Create(slots[i] as XUiC_ItemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum);
                 }
                 float t2 = Time.realtimeSinceStartup;
-                Log.Out($"[QuickStack] Saved locked slots config in { (int)((t2 - t1) / 1000.0f) } ms");
+                Log.Out($"[QuickStack] Saved locked slots config in { (t2 - t1) / 1000.0f } ms");
             } 
             catch (Exception e)
             {
@@ -337,12 +337,26 @@ internal class Patches
                 if(!File.Exists(path))
                 {
                     Log.Warning("[QuickStack] No locked slots config detected. Slots will default to unlocked");
+                    return;
                 }
-                else
+
+                long length = new FileInfo(path).Length;
+                if(length < sizeof(int) * 2)
                 {
+                    Log.Error("[QuickStack] locked slots config appears corrupted. Slots will be defaulted to unlocked");
+                }
+
+                {
+                    
                     using (BinaryReader binReader = new BinaryReader(File.Open(path, FileMode.Open)))
                     {
-                        Traverse.Create(QuickStack.playerControls).Field("stashLockedSlots").SetValue(binReader.ReadInt32());
+                        int lockedSlots = binReader.ReadInt32();
+                        // KHA20-LockableInvSlots compatibility
+                        if (QuickStack.playerControls.GetChildById("cbxLockedSlots") is XUiC_ComboBoxInt comboBox)
+                        {
+                            comboBox.Value = lockedSlots;
+                        }
+
                         int savedLockedSlots = binReader.ReadInt32();
 
                         XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
@@ -354,7 +368,7 @@ internal class Patches
                     }
                 }
                 float t2 = Time.realtimeSinceStartup;
-                Log.Out($"[QuickStack] Loaded locked slots config in { (int)((t2 - t1) / 1000.0f) } ms");
+                Log.Out($"[QuickStack] Loaded locked slots config in { (t2 - t1) / 1000.0f } ms");
             }
             catch(Exception e)
             {
