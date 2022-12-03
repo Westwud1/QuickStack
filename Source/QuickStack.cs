@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using HarmonyLib;
 using UnityEngine;
 
@@ -24,7 +25,7 @@ internal class QuickStack
 
     public static string lockedSlotsFile()
     {
-        return GameIO.GetPlayerDataDir() + "/" + GameManager.Instance.persistentLocalPlayer.UserIdentifier + ".qsls";
+        return Path.Combine(GameIO.GetPlayerDataDir(), GameManager.Instance.persistentLocalPlayer.UserIdentifier + ".qsls");
     }
 
     public static Dictionary<TileEntity, int> GetOpenedTiles()
