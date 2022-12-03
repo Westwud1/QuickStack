@@ -30,7 +30,6 @@ class NetPackageFindOpenableContainers : NetPackage
         {
             return;
         }
-
         if (!_world.Players.dict.TryGetValue(playerEntityId, out var playerEntity) || playerEntity == null)
         {
             return;
@@ -69,7 +68,10 @@ class NetPackageFindOpenableContainers : NetPackage
 
     public override void read(PooledBinaryReader _reader)
     {
-        playerEntityId = _reader.ReadInt32();
+        // ignore entity ID sent by client
+        _ = _reader.ReadInt32();
+        // use the NetPackage-provided one instead
+        playerEntityId = Sender.entityId;
         type = (QuickStackType)_reader.ReadByte();
     }
 
