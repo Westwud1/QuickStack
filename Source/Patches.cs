@@ -303,6 +303,7 @@ internal class Patches
         {
             try
             {
+                float t1 = Time.realtimeSinceStartup;
                 XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
 
                 using (BinaryWriter binWriter = new BinaryWriter(File.Open(QuickStack.lockedSlotsFile(), FileMode.Create)))
@@ -313,10 +314,12 @@ internal class Patches
                     for (int i = 0; i < slots.Length; i++)
                         binWriter.Write(Traverse.Create(slots[i] as XUiC_ItemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum);
                 }
-            }
-            catch
+                float t2 = Time.realtimeSinceStartup;
+                Log.Out($"[QuickStack] Saved locked slots config in { (int)((t2 - t1) / 1000.0f) } ms");
+            } 
+            catch (Exception e)
             {
-
+                Log.Error($"[QuickStack] Failed to write locked slots file:  {e.Message}. Slot states will not be saved!");
             }
         }
     }
@@ -329,24 +332,33 @@ internal class Patches
         {
             try
             {
-                using (BinaryReader binReader = new BinaryReader(File.Open(QuickStack.lockedSlotsFile(), FileMode.Open)))
+                float t1 = Time.realtimeSinceStartup;
+                string path = QuickStack.lockedSlotsFile();
+                if(!File.Exists(path))
                 {
-                    XUiC_ComboBoxInt comboBox = QuickStack.playerControls.GetChildById("cbxLockedSlots") as XUiC_ComboBoxInt;
-                    comboBox.Value = binReader.ReadInt32();
-
-                    int savedLockedSlots = binReader.ReadInt32();
-
-                    XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
-                    for (int i = 0; i < Math.Min(savedLockedSlots, slots.Length); i++)
+                    Log.Warning("[QuickStack] No locked slots config detected. Slots will default to unlocked");
+                }
+                else
+                {
+                    using (BinaryReader binReader = new BinaryReader(File.Open(path, FileMode.Open)))
                     {
-                        if (binReader.ReadBoolean())
-                            Traverse.Create(slots[i] as XUiC_ItemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
+                        Traverse.Create(QuickStack.playerControls).Field("stashLockedSlots").SetValue(binReader.ReadInt32());
+                        int savedLockedSlots = binReader.ReadInt32();
+
+                        XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
+                        for (int i = 0; i < Math.Min(savedLockedSlots, slots.Length); i++)
+                        {
+                            if (binReader.ReadBoolean())
+                                Traverse.Create(slots[i] as XUiC_ItemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
+                        }
                     }
                 }
+                float t2 = Time.realtimeSinceStartup;
+                Log.Out($"[QuickStack] Loaded locked slots config in { (int)((t2 - t1) / 1000.0f) } ms");
             }
-            catch
+            catch(Exception e)
             {
-
+                Log.Error($"[QuickStack] Failed to read locked slots config:  {e.Message}. Slots will default to unlocked");
             }
         }
     }
