@@ -200,7 +200,7 @@ internal class Patches
             {
                 slots[i].OnPress += (XUiController _sender, int _mouseButton) =>
                 {
-                    for (int j = 0; j < QuickStack.quickStackHotkeys.Length - 1; j++)
+                    for (int j = 0; j < QuickStack.quickLockHotkeys.Length; j++)
                     {
                         if (!UICamera.GetKey(QuickStack.quickLockHotkeys[j]))
                             return;
