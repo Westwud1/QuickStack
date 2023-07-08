@@ -440,6 +440,7 @@ internal class QuickStack
                 if (playerControls.GetChildById("cbxLockedSlots") is XUiC_ComboBoxInt comboBox)
                 {
                     comboBox.Value = comboLockedSlots;
+                    playerControls.ChangeLockedSlots(comboLockedSlots);
                 }
 
                 XUiController[] slots = playerBackpack.GetItemStackControllers();

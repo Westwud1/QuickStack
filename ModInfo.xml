@@ -4,6 +4,6 @@
 		<Name value="QuickStack" />
 		<Description value="Enables the player to quickly deposit/restock items from their inventory to nearby containers without the need to open them. Enables the player to lock specific slots." />
 		<Author value="Westwud" />
-		<Version value="1.6.2" />
+		<Version value="1.6.3" />
 	</ModInfo>
 </xml>
