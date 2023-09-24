@@ -45,11 +45,12 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            if (__instance.MoveAllowed(out srcGrid, out dstInventory))
+            if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
-                ValueTuple<bool, bool> valueTuple = QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.All, __instance.MoveStartBottomRight);
+                ValueTuple<bool, bool> valueTuple = QuickStack.StashItems(srcWindow, srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.All);
                 Action<bool, bool> moveAllDone = __instance.MoveAllDone;
                 if (moveAllDone == null)
                 {
@@ -71,17 +72,18 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
-            var moveKind = QuickStack.GetMoveKind();
+            XUiM_LootContainer.EItemMoveKind moveKind = QuickStack.GetMoveKind();
             if (moveKind == XUiM_LootContainer.EItemMoveKind.FillOnly)
             {
                 moveKind = XUiM_LootContainer.EItemMoveKind.FillOnlyFirstCreateSecond;
             }
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            if (__instance.MoveAllowed(out srcGrid, out dstInventory))
+            if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
-                QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), moveKind, __instance.MoveStartBottomRight);
+                QuickStack.StashItems(srcWindow, srcGrid, dstInventory, moveKind);
             }
 
             return false;
@@ -97,11 +99,12 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            if (__instance.MoveAllowed(out srcGrid, out dstInventory))
+            if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
-                QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.FillOnly, __instance.MoveStartBottomRight);
+                QuickStack.StashItems(srcWindow, srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.FillOnly);
             }
 
             return false;
@@ -117,11 +120,12 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            if (__instance.MoveAllowed(out srcGrid, out dstInventory))
+            if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
-                QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.FillAndCreate, __instance.MoveStartBottomRight);
+                QuickStack.StashItems(srcWindow, srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.FillAndCreate);
             }
 
             return false;
@@ -137,11 +141,12 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
-            int lockedSlots = Traverse.Create(QuickStack.playerControls).Field("stashLockedSlots").GetValue<int>();
+            int lockedSlots = QuickStack.stashLockedSlots();
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            __instance.MoveAllowed(out srcGrid, out dstInventory);
+            __instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory);
 
             XUiController[] itemStackControllers = srcGrid.GetItemStackControllers();
 
@@ -215,14 +220,65 @@ internal class Patches
                     }
                     else if (Traverse.Create(itemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
                     {
-                        Traverse.Create(itemStack).Field("lockType").SetValue(XUiC_ItemStack.LockTypes.None);
-                        itemStack.RefreshBindings();
+                        int index = 0;
+                        for (int k = 0; k < slots.Length; ++k)
+                        {
+                            if (itemStack == slots[k])
+                            {
+                                index = k;
+                                break;
+                            }
+                        }
+
+                        // If built-in slots are locked, disable unlocking by clicking
+                        if (index >= QuickStack.stashLockedSlots())
+                        {
+                            Traverse.Create(itemStack).Field("lockType").SetValue(XUiC_ItemStack.LockTypes.None);
+                            itemStack.RefreshBindings();
+                        }  
                     }
 
-                    //Manager.PlayInsidePlayerHead(StrAudioClip.UITab, -1, 0f, false);
-                    //Manager.PlayXUiSound(audio, 1);
                     Manager.PlayButtonClick();
                 };
+            }
+        }
+    }
+
+    //This patch makes it so the built-in locked slots use the quickstack locking mechanism 
+    [HarmonyPatch(typeof(XUiC_ContainerStandardControls), "ChangeLockedSlots")]
+    private class QS_08
+    {
+        public static void Postfix(XUiC_ContainerStandardControls __instance)
+        {
+            if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
+                return;
+
+            int lockedSlots = QuickStack.stashLockedSlots();
+
+            XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
+
+            //Lock the first N slots
+            for (int i = 0; i < lockedSlots; ++i)
+            {
+                XUiC_ItemStack itemStack = (XUiC_ItemStack)slots[i];
+
+                if (Traverse.Create(itemStack).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None)
+                {
+                    Traverse.Create(itemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
+                    itemStack.RefreshBindings();
+                }
+            }
+
+            //Unlock the other slots after N
+            for (int i = lockedSlots; i < slots.Length; ++i)
+            {
+                XUiC_ItemStack itemStack = (XUiC_ItemStack)slots[i];
+
+                if (Traverse.Create(itemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
+                {
+                    Traverse.Create(itemStack).Field("lockType").SetValue(XUiC_ItemStack.LockTypes.None);
+                    itemStack.RefreshBindings();
+                }
             }
         }
     }
@@ -230,7 +286,7 @@ internal class Patches
     //This patch is used to add a binding to know whether the player is not accessing other loot container inventories with some exceptions like workstations.
     //This is used in the xml file to make the quickstack icon visible only when the player inventory is open.
     [HarmonyPatch(typeof(XUiC_BackpackWindow), "GetBindingValue")]
-    private class QS_08
+    private class QS_09
     {
         public static void Postfix(ref bool __result, XUiC_BackpackWindow __instance, ref string value, string bindingName)
         {
@@ -253,7 +309,7 @@ internal class Patches
 
     //This patch is used to update the slot color in the backpack if the slot is locked by the player.
     [HarmonyPatch(typeof(XUiC_ItemStack), "updateBorderColor")]
-    private class QS_09
+    private class QS_10
     {
         [HarmonyPostfix]
         public static void Postfix(XUiC_ItemStack __instance)
@@ -265,7 +321,7 @@ internal class Patches
 
     //QuickStack and Restock functionallity by pressing hotkeys (useful if other mods remove the UI buttons)
     [HarmonyPatch(typeof(GameManager), "UpdateTick")]
-    private class QS_10
+    private class QS_11
     {
         public static void Postfix(EntityPlayerLocal __instance)
         {
@@ -296,7 +352,7 @@ internal class Patches
 
     //Save locked slots singleplayer
     [HarmonyPatch(typeof(GameManager), "SaveLocalPlayerData")]
-    private class QS_11
+    private class QS_12
     {
         public static void Postfix()
         {
@@ -306,7 +362,7 @@ internal class Patches
 
     //Save locked slots multiplayer
     [HarmonyPatch(typeof(GameManager), "Disconnect")]
-    private class QS_12
+    private class QS_13
     {
         public static void Postfix()
         {
@@ -316,7 +372,7 @@ internal class Patches
 
     //Load locked slots
     [HarmonyPatch(typeof(GameManager), "setLocalPlayerEntity")]
-    private class QS_13
+    private class QS_14
     {
         public static void Postfix()
         {
