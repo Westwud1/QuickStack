@@ -2,7 +2,6 @@
 using Audio;
 using HarmonyLib;
 using UnityEngine;
-using static vp_Message;
 
 internal class Patches
 {
