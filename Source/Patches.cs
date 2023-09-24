@@ -50,7 +50,7 @@ internal class Patches
             IInventory dstInventory;
             if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
-                ValueTuple<bool, bool> valueTuple = QuickStack.StashItems(srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.All);
+                ValueTuple<bool, bool> valueTuple = QuickStack.StashItems(srcWindow, srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.All);
                 Action<bool, bool> moveAllDone = __instance.MoveAllDone;
                 if (moveAllDone == null)
                 {
@@ -83,7 +83,7 @@ internal class Patches
             IInventory dstInventory;
             if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
-                QuickStack.StashItems(srcGrid, dstInventory, moveKind);
+                QuickStack.StashItems(srcWindow, srcGrid, dstInventory, moveKind);
             }
 
             return false;
@@ -104,7 +104,7 @@ internal class Patches
             IInventory dstInventory;
             if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
-                QuickStack.StashItems(srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.FillOnly);
+                QuickStack.StashItems(srcWindow, srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.FillOnly);
             }
 
             return false;
@@ -125,7 +125,7 @@ internal class Patches
             IInventory dstInventory;
             if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
-                QuickStack.StashItems(srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.FillAndCreate);
+                QuickStack.StashItems(srcWindow, srcGrid, dstInventory, XUiM_LootContainer.EItemMoveKind.FillAndCreate);
             }
 
             return false;

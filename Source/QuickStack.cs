@@ -162,7 +162,7 @@ internal class QuickStack
 
                     if (IsValidLoot(tileEntity) && !tileEntity.IsUserAccessing())
                     {
-                        StashItems(playerBackpack, tileEntity, moveKind);
+                        StashItems(backpackWindow, playerBackpack, tileEntity, moveKind);
                         tileEntity.SetModified();
                     }
                 }
@@ -187,7 +187,7 @@ internal class QuickStack
                 continue;
             }
 
-            StashItems(playerBackpack, tileEntity, moveKind);
+            StashItems(backpackWindow, playerBackpack, tileEntity, moveKind);
             tileEntity.SetModified();
         }
     }
@@ -221,7 +221,7 @@ internal class QuickStack
                     if (IsValidLoot(tileEntity) && !tileEntity.IsUserAccessing())
                     {
                         lootWindowGroup.SetTileEntityChest("QUICKSTACK", tileEntity);
-                        StashItems(lootContainer, primaryPlayer.bag, moveKind);
+                        StashItems(backpackWindow, lootContainer, primaryPlayer.bag, moveKind);
                         tileEntity.SetModified();
                     }
                 }
@@ -251,13 +251,13 @@ internal class QuickStack
                 continue;
 
             lootWindowGroup.SetTileEntityChest("QUICKSTACK", tileEntity);
-            StashItems(lootContainer, primaryPlayer.bag, moveKind);
+            StashItems(backpackWindow, lootContainer, primaryPlayer.bag, moveKind);
             tileEntity.SetModified();
         }
     }
 
     //Refactored from the original code to remove stash time due to quick stack/restock and check for custom locks
-    public static ValueTuple<bool, bool> StashItems(XUiC_ItemStackGrid _srcGrid, IInventory _dstInventory, XUiM_LootContainer.EItemMoveKind _moveKind)
+    public static ValueTuple<bool, bool> StashItems(XUiController _srcWindow, XUiC_ItemStackGrid _srcGrid, IInventory _dstInventory, XUiM_LootContainer.EItemMoveKind _moveKind)
     {
         if (_srcGrid == null || _dstInventory == null)
         {
@@ -267,6 +267,23 @@ internal class QuickStack
 
         bool item = true;
         bool item2 = false;
+
+        PreferenceTracker preferenceTracker = null;
+        XUiC_LootWindow xuiC_LootWindow = _srcWindow as XUiC_LootWindow;
+        if (xuiC_LootWindow != null)
+        {
+            preferenceTracker = xuiC_LootWindow.GetPreferenceTrackerFromTileEntity();
+        }
+        if (preferenceTracker != null && preferenceTracker.AnyPreferences)
+        {
+            XUiM_PlayerInventory xuiM_PlayerInventory = _dstInventory as XUiM_PlayerInventory;
+            if (xuiM_PlayerInventory != null)
+            {
+                ValueTuple<bool, bool> valueTuple = xuiM_PlayerInventory.AddItemsUsingPreferenceTracker(_srcGrid, preferenceTracker);
+                item = valueTuple.Item1;
+                item2 = valueTuple.Item2;
+            }
+        }
 
         for (int i=0;i<itemStackControllers.Length;++i)
         {
