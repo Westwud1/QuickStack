@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Reflection;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Xml;
 using HarmonyLib;
 using UnityEngine;
@@ -9,7 +11,7 @@ public class QuickStackModApi : IModApi
 {
     public void InitMod(Mod modInstance)
     {
-        //Load hotkeys from QuickstackConfig.xml
+        //Load config from QuickstackConfig.xml
         try
         {
             string path = GamePrefs.GetString(EnumGamePrefs.UserDataFolder) + "/Mods/QuickStack";
@@ -33,10 +35,22 @@ public class QuickStackModApi : IModApi
             QuickStack.quickRestockHotkeys = new KeyCode[quickRestockButtons.Length];
             for (int i = 0; i < quickRestockButtons.Length; i++)
                 QuickStack.quickRestockHotkeys[i] = (KeyCode)int.Parse(quickRestockButtons[i]);
+
+            QuickStack.stashDistanceX = Int32.Parse(xml.GetElementsByTagName("QuickStashDistanceX")[0].InnerText);
+            if (QuickStack.stashDistanceX < 0 || QuickStack.stashDistanceX > 127)
+                QuickStack.stashDistanceX = 7;
+
+            QuickStack.stashDistanceY = Int32.Parse(xml.GetElementsByTagName("QuickStashDistanceY")[0].InnerText);
+            if (QuickStack.stashDistanceY < 0 || QuickStack.stashDistanceY > 127)
+                QuickStack.stashDistanceY = 7;
+
+            QuickStack.stashDistanceZ = Int32.Parse(xml.GetElementsByTagName("QuickStashDistanceZ")[0].InnerText);
+            if (QuickStack.stashDistanceZ < 0 || QuickStack.stashDistanceZ > 127)
+                QuickStack.stashDistanceZ = 7;
         }
         catch
         {
-            Log.Error("Failed to load or parse config for QuickStack");
+            Log.Warning("Failed to load or parse config for QuickStack");
 
             QuickStack.quickLockHotkeys = new KeyCode[1];
             QuickStack.quickLockHotkeys[0] = KeyCode.LeftAlt;
@@ -48,6 +62,10 @@ public class QuickStackModApi : IModApi
             QuickStack.quickRestockHotkeys = new KeyCode[2];
             QuickStack.quickRestockHotkeys[0] = KeyCode.LeftAlt;
             QuickStack.quickRestockHotkeys[1] = KeyCode.Z;
+
+            QuickStack.stashDistanceX = 7;
+            QuickStack.stashDistanceY = 7;
+            QuickStack.stashDistanceZ = 7;
         }
 
         Harmony harmony = new Harmony(GetType().ToString());

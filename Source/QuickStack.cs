@@ -14,7 +14,9 @@ public enum QuickStackType : byte
 internal class QuickStack
 {
     public static float[] lastClickTimes = new float[(int)QuickStackType.Count];
-    public static int stackRadius = 7;
+    public static int stashDistanceX = 7;
+    public static int stashDistanceY = 7;
+    public static int stashDistanceZ = 7;
     public static XUiC_Backpack playerBackpack;
     public static XUiC_BackpackWindow backpackWindow;
     public static XUiC_ContainerStandardControls playerControls;
@@ -94,16 +96,11 @@ internal class QuickStack
     // Yields all openable loot containers in a cubic radius about a point
     public static IEnumerable<ValueTuple<Vector3i, TileEntityLootContainer>> FindNearbyLootContainers(Vector3i _center, int _playerEntityId)
     {
-        if (stackRadius > 127 || stackRadius < -127)
+        for (int i = -stashDistanceX; i <= stashDistanceX; i++)
         {
-            stackRadius = 127;
-        }
-
-        for (int i = -stackRadius; i <= stackRadius; i++)
-        {
-            for (int j = -stackRadius; j <= stackRadius; j++)
+            for (int j = -stashDistanceY; j <= stashDistanceY; j++)
             {
-                for (int k = -stackRadius; k <= stackRadius; k++)
+                for (int k = -stashDistanceZ; k <= stashDistanceZ; k++)
                 {
                     var offset = new Vector3i(i, j, k);
                     if (!(GameManager.Instance.World.GetTileEntity(0, _center + offset) is TileEntityLootContainer tileEntity))
@@ -150,11 +147,11 @@ internal class QuickStack
         //returns tile entities opened by other players
         Dictionary<TileEntity, int> openedTileEntities = GetOpenedTiles();
 
-        for (int i = -stackRadius; i <= stackRadius; i++)
+        for (int i = -stashDistanceX; i <= stashDistanceX; i++)
         {
-            for (int j = -stackRadius; j <= stackRadius; j++)
+            for (int j = -stashDistanceY; j <= stashDistanceY; j++)
             {
-                for (int k = -stackRadius; k <= stackRadius; k++)
+                for (int k = -stashDistanceZ; k <= stashDistanceZ; k++)
                 {
                     Vector3i blockPos = new Vector3i((int)primaryPlayer.position.x + i, (int)primaryPlayer.position.y + j, (int)primaryPlayer.position.z + k);
                     TileEntityLootContainer tileEntity = GameManager.Instance.World.GetTileEntity(0, blockPos) as TileEntityLootContainer;
@@ -162,7 +159,6 @@ internal class QuickStack
                     if (tileEntity == null)
                         continue;
 
-                    //TODO: !tileEntity.IsUserAccessing() && !openedTileEntities.ContainsKey(tileEntity) does not work on multiplayer
                     if (IsValidLoot(tileEntity) && !tileEntity.IsUserAccessing() && !openedTileEntities.ContainsKey(tileEntity))
                     {
                         StashItems(playerBackpack, tileEntity, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
@@ -217,18 +213,17 @@ internal class QuickStack
         //returns tile entities opened by other players
         Dictionary<TileEntity, int> openedTileEntities = GetOpenedTiles();
 
-        for (int i = -stackRadius; i <= stackRadius; i++)
+        for (int i = -stashDistanceX; i <= stashDistanceX; i++)
         {
-            for (int j = -stackRadius; j <= stackRadius; j++)
+            for (int j = -stashDistanceY; j <= stashDistanceY; j++)
             {
-                for (int k = -stackRadius; k <= stackRadius; k++)
+                for (int k = -stashDistanceZ; k <= stashDistanceZ; k++)
                 {
                     Vector3i blockPos = new Vector3i((int)primaryPlayer.position.x + i, (int)primaryPlayer.position.y + j, (int)primaryPlayer.position.z + k);
 
                     if (!(GameManager.Instance.World.GetTileEntity(0, blockPos) is TileEntityLootContainer tileEntity))
                         continue;
 
-                    //TODO: !tileEntity.IsUserAccessing() && !openedTileEntities.ContainsKey(tileEntity) does not work on multiplayer
                     if (IsValidLoot(tileEntity) && !tileEntity.IsUserAccessing() && !openedTileEntities.ContainsKey(tileEntity))
                     {
                         lootWindowGroup.SetTileEntityChest("QUICKSTACK", tileEntity);
@@ -375,7 +370,7 @@ internal class QuickStack
 
     /* 
      * Binary format:
-     * [int32] locked slots - mod compatibility
+     * [int32] locked slots - built-in locking mechanism compatibility
      * [int32] array count (N) of locked slots by us
      * [N bytes] boolean array indicating locked slots
      */
@@ -398,7 +393,7 @@ internal class QuickStack
         }
         catch (Exception e)
         {
-            Log.Error($"[QuickStack] Failed to write locked slots file: {e.Message}. Slot states will not be saved!");
+            Log.Warning($"[QuickStack] Failed to write locked slots file: {e.Message}. Slot states will not be saved!");
         }
     }
 
@@ -419,7 +414,7 @@ internal class QuickStack
             if (reportedLength < 0)
             {
                 // file is too small to process
-                Log.Error("[QuickStack] locked slots config appears corrupted. Slots will be defaulted to unlocked");
+                Log.Warning("[QuickStack] locked slots config appears corrupted. Slots will be defaulted to unlocked");
                 return;
             }
 
@@ -432,11 +427,11 @@ internal class QuickStack
                 int quickStackLockedSlots = binReader.ReadInt32();
                 if (reportedLength != quickStackLockedSlots * sizeof(bool))
                 {
-                    Log.Error("[QuickStack] locked slots config appears corrupted. Slots will be defaulted to unlocked");
+                    Log.Warning("[QuickStack] locked slots config appears corrupted. Slots will be defaulted to unlocked");
                     return;
                 }
 
-                // KHA20-LockableInvSlots compatibility
+                // Built-in locking mechanism compatibility
                 if (playerControls.GetChildById("cbxLockedSlots") is XUiC_ComboBoxInt comboBox)
                 {
                     comboBox.Value = comboLockedSlots;
@@ -454,7 +449,7 @@ internal class QuickStack
         }
         catch (Exception e)
         {
-            Log.Error($"[QuickStack] Failed to read locked slots config:  {e.Message}. Slots will default to unlocked");
+            Log.Warning($"[QuickStack] Failed to read locked slots config:  {e.Message}. Slots will default to unlocked");
         }
     }
 }

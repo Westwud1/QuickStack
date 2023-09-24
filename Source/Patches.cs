@@ -45,9 +45,10 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            if (__instance.MoveAllowed(out srcGrid, out dstInventory))
+            if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
                 ValueTuple<bool, bool> valueTuple = QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.All, __instance.MoveStartBottomRight);
                 Action<bool, bool> moveAllDone = __instance.MoveAllDone;
@@ -71,15 +72,16 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
-            var moveKind = QuickStack.GetMoveKind();
+            XUiM_LootContainer.EItemMoveKind moveKind = QuickStack.GetMoveKind();
             if (moveKind == XUiM_LootContainer.EItemMoveKind.FillOnly)
             {
                 moveKind = XUiM_LootContainer.EItemMoveKind.FillOnlyFirstCreateSecond;
             }
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            if (__instance.MoveAllowed(out srcGrid, out dstInventory))
+            if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
                 QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), moveKind, __instance.MoveStartBottomRight);
             }
@@ -97,9 +99,10 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            if (__instance.MoveAllowed(out srcGrid, out dstInventory))
+            if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
                 QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.FillOnly, __instance.MoveStartBottomRight);
             }
@@ -117,9 +120,10 @@ internal class Patches
             if (__instance.Parent.Parent.GetType() != typeof(XUiC_BackpackWindow))
                 return true;
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            if (__instance.MoveAllowed(out srcGrid, out dstInventory))
+            if (__instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory))
             {
                 QuickStack.StashItems(srcGrid, dstInventory, Traverse.Create(__instance).Field("stashLockedSlots").GetValue<int>(), XUiM_LootContainer.EItemMoveKind.FillAndCreate, __instance.MoveStartBottomRight);
             }
@@ -139,9 +143,10 @@ internal class Patches
 
             int lockedSlots = Traverse.Create(QuickStack.playerControls).Field("stashLockedSlots").GetValue<int>();
 
+            XUiController srcWindow;
             XUiC_ItemStackGrid srcGrid;
             IInventory dstInventory;
-            __instance.MoveAllowed(out srcGrid, out dstInventory);
+            __instance.MoveAllowed(out srcWindow, out srcGrid, out dstInventory);
 
             XUiController[] itemStackControllers = srcGrid.GetItemStackControllers();
 

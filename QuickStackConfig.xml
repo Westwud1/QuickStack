@@ -3,6 +3,12 @@
 	<QuickLockButtons>308</QuickLockButtons>
 	<QuickStackButtons>308 120</QuickStackButtons>
 	<QuickRestockButtons>308 122</QuickRestockButtons>
+
+	<!-- X and Z are forwards/backwards/sideways and Y is up/down. Prefer to have X and Z the same value. -->
+	<!-- If the values are (7, 7, 7), that means you have a 15x15x15 box centered on your player that you can quick stack/restock. -->
+	<QuickStashDistanceX>7</QuickStashDistanceX> 
+	<QuickStashDistanceY>7</QuickStashDistanceY>
+	<QuickStashDistanceZ>7</QuickStashDistanceZ>
 </xml>
 
 <!--
