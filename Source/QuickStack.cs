@@ -25,6 +25,11 @@ internal class QuickStack
     public static KeyCode[] quickStackHotkeys;
     public static KeyCode[] quickRestockHotkeys;
 
+    public static int stashLockedSlots()
+    {
+        return Traverse.Create(playerControls).Field("stashLockedSlots").GetValue<int>();
+    }
+
     public static string lockedSlotsFile()
     {
         if (ConnectionManager.Instance.IsSinglePlayer)
@@ -142,10 +147,6 @@ internal class QuickStack
         var moveKind = GetMoveKind();
 
         EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
-        int lockedSlots = Traverse.Create(playerControls).Field("stashLockedSlots").GetValue<int>();
-
-        //returns tile entities opened by other players
-        Dictionary<TileEntity, int> openedTileEntities = GetOpenedTiles();
 
         for (int i = -stashDistanceX; i <= stashDistanceX; i++)
         {
@@ -159,9 +160,9 @@ internal class QuickStack
                     if (tileEntity == null)
                         continue;
 
-                    if (IsValidLoot(tileEntity) && !tileEntity.IsUserAccessing() && !openedTileEntities.ContainsKey(tileEntity))
+                    if (IsValidLoot(tileEntity) && !tileEntity.IsUserAccessing())
                     {
-                        StashItems(playerBackpack, tileEntity, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
+                        StashItems(playerBackpack, tileEntity, moveKind);
                         tileEntity.SetModified();
                     }
                 }
@@ -177,10 +178,7 @@ internal class QuickStack
         var moveKind = GetMoveKind();
 
         if (_entityContainers == null)
-        {
             return;
-        }
-        int lockedSlots = Traverse.Create(playerControls).Field("stashLockedSlots").GetValue<int>();
 
         foreach (var offset in _entityContainers)
         {
@@ -189,7 +187,7 @@ internal class QuickStack
                 continue;
             }
 
-            StashItems(playerBackpack, tileEntity, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
+            StashItems(playerBackpack, tileEntity, moveKind);
             tileEntity.SetModified();
         }
     }
@@ -205,13 +203,9 @@ internal class QuickStack
 
         EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
         LocalPlayerUI playerUI = LocalPlayerUI.GetUIForPlayer(primaryPlayer);
-        int lockedSlots = Traverse.Create(playerControls).Field("stashLockedSlots").GetValue<int>();
         XUiC_LootWindowGroup lootWindowGroup = (XUiC_LootWindowGroup)((XUiWindowGroup)playerUI.windowManager.GetWindow("looting")).Controller;
         XUiC_LootWindow lootWindow = Traverse.Create(lootWindowGroup).Field("lootWindow").GetValue<XUiC_LootWindow>();
         XUiC_LootContainer lootContainer = Traverse.Create(lootWindow).Field("lootContainer").GetValue<XUiC_LootContainer>();
-
-        //returns tile entities opened by other players
-        Dictionary<TileEntity, int> openedTileEntities = GetOpenedTiles();
 
         for (int i = -stashDistanceX; i <= stashDistanceX; i++)
         {
@@ -224,10 +218,10 @@ internal class QuickStack
                     if (!(GameManager.Instance.World.GetTileEntity(0, blockPos) is TileEntityLootContainer tileEntity))
                         continue;
 
-                    if (IsValidLoot(tileEntity) && !tileEntity.IsUserAccessing() && !openedTileEntities.ContainsKey(tileEntity))
+                    if (IsValidLoot(tileEntity) && !tileEntity.IsUserAccessing())
                     {
                         lootWindowGroup.SetTileEntityChest("QUICKSTACK", tileEntity);
-                        StashItems(lootContainer, primaryPlayer.bag, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
+                        StashItems(lootContainer, primaryPlayer.bag, moveKind);
                         tileEntity.SetModified();
                     }
                 }
@@ -247,7 +241,6 @@ internal class QuickStack
 
         EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
         LocalPlayerUI playerUI = LocalPlayerUI.GetUIForPlayer(primaryPlayer);
-        int lockedSlots = Traverse.Create(playerControls).Field("stashLockedSlots").GetValue<int>();
         XUiC_LootWindowGroup lootWindowGroup = (XUiC_LootWindowGroup)((XUiWindowGroup)playerUI.windowManager.GetWindow("looting")).Controller;
         XUiC_LootWindow lootWindow = Traverse.Create(lootWindowGroup).Field("lootWindow").GetValue<XUiC_LootWindow>();
         XUiC_LootContainer lootContainer = Traverse.Create(lootWindow).Field("lootContainer").GetValue<XUiC_LootContainer>();
@@ -258,13 +251,13 @@ internal class QuickStack
                 continue;
 
             lootWindowGroup.SetTileEntityChest("QUICKSTACK", tileEntity);
-            StashItems(lootContainer, primaryPlayer.bag, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
+            StashItems(lootContainer, primaryPlayer.bag, moveKind);
             tileEntity.SetModified();
         }
     }
 
     //Refactored from the original code to remove stash time due to quick stack/restock and check for custom locks
-    public static ValueTuple<bool, bool> StashItems(XUiC_ItemStackGrid _srcGrid, IInventory _dstInventory, int _ignoredSlots, XUiM_LootContainer.EItemMoveKind _moveKind, bool _startBottomRight)
+    public static ValueTuple<bool, bool> StashItems(XUiC_ItemStackGrid _srcGrid, IInventory _dstInventory, XUiM_LootContainer.EItemMoveKind _moveKind)
     {
         if (_srcGrid == null || _dstInventory == null)
         {
@@ -274,37 +267,41 @@ internal class QuickStack
 
         bool item = true;
         bool item2 = false;
-        int num = _startBottomRight ? (itemStackControllers.Length - 1) : _ignoredSlots;
-        while (_startBottomRight ? (num >= _ignoredSlots) : (num < itemStackControllers.Length))
+
+        for (int i=0;i<itemStackControllers.Length;++i)
         {
-            XUiC_ItemStack xuiC_ItemStack = (XUiC_ItemStack)itemStackControllers[num];
-            if (!xuiC_ItemStack.StackLock && Traverse.Create(xuiC_ItemStack).Field("lockType").GetValue<int>() != QuickStack.customLockEnum)
+            XUiC_ItemStack xuiC_ItemStack = (XUiC_ItemStack)itemStackControllers[i];
+
+            if (xuiC_ItemStack.StackLock)
+                continue;
+
+            if (Traverse.Create(xuiC_ItemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
+                continue;
+
+            ItemStack itemStack = xuiC_ItemStack.ItemStack;
+            if (xuiC_ItemStack.ItemStack.IsEmpty())
+                continue;
+
+            int count = itemStack.count;
+            _dstInventory.TryStackItem(0, itemStack);
+
+            if (itemStack.count > 0 && (_moveKind == XUiM_LootContainer.EItemMoveKind.All || (_moveKind == XUiM_LootContainer.EItemMoveKind.FillAndCreate && _dstInventory.HasItem(itemStack.itemValue))) && _dstInventory.AddItem(itemStack))
             {
-                ItemStack itemStack = xuiC_ItemStack.ItemStack;
-                if (!xuiC_ItemStack.ItemStack.IsEmpty())
-                {
-                    int count = itemStack.count;
-                    _dstInventory.TryStackItem(0, itemStack);
-                    if (itemStack.count > 0 && (_moveKind == XUiM_LootContainer.EItemMoveKind.All || (_moveKind == XUiM_LootContainer.EItemMoveKind.FillAndCreate && _dstInventory.HasItem(itemStack.itemValue))) && _dstInventory.AddItem(itemStack))
-                    {
-                        itemStack = ItemStack.Empty.Clone();
-                    }
-                    if (itemStack.count == 0)
-                    {
-                        itemStack = ItemStack.Empty.Clone();
-                    }
-                    else
-                    {
-                        item = false;
-                    }
-                    if (count != itemStack.count)
-                    {
-                        xuiC_ItemStack.ForceSetItemStack(itemStack);
-                        item2 = true;
-                    }
-                }
+                itemStack = ItemStack.Empty.Clone();
             }
-            num = (_startBottomRight ? (num - 1) : (num + 1));
+            if (itemStack.count == 0)
+            {
+                itemStack = ItemStack.Empty.Clone();
+            }
+            else
+            {
+                item = false;
+            }
+            if (count != itemStack.count)
+            {
+                xuiC_ItemStack.ForceSetItemStack(itemStack);
+                item2 = true;
+            }
         }
 
         return new ValueTuple<bool, bool>(item, item2);
