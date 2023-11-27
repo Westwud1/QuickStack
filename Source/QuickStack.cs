@@ -27,7 +27,7 @@ internal class QuickStack
 
     public static int stashLockedSlots()
     {
-        return Traverse.Create(playerControls).Field("stashLockedSlots").GetValue<int>();
+        return playerControls.xui.playerUI.entityPlayer.bag.LockedSlots;
     }
 
     public static string lockedSlotsFile()
