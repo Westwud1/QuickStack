@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die\7DaysToDie_Data\Managed\0Harmony.dll</HintPath>
+      <HintPath>..\0_TFP_Harmony\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
@@ -44,6 +44,10 @@
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die\7DaysToDie_Data\Managed\LogLibrary.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="NGUI">
+      <HintPath>..\..\7DaysToDie_Data\Managed\NGUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,6 +56,14 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="TfpHarmony">
+      <HintPath>..\0_TFP_Harmony\TfpHarmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\7DaysToDie_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die\7DaysToDie_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
@@ -71,7 +83,7 @@
     <Content Include="Config\Localization.txt" />
     <Content Include="Config\XUi\windows.xml" />
     <Content Include="ModInfo.xml" />
-	<Content Include="QuickStackConfig.xml" />
+    <Content Include="QuickStackConfig.xml" />
     <Content Include="UIAtlases\UIAtlas\ui_game_symbol_quickrestock.png" />
     <Content Include="UIAtlases\UIAtlas\ui_game_symbol_quickstack.png" />
   </ItemGroup>

@@ -155,7 +155,7 @@ internal class Patches
             int numUnlockedSlots = 0;
             for (int i = lockedSlots; i < itemStackControllers.Length; ++i)
             {
-                if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
+                if ((itemStackControllers[i] as XUiC_ItemStack).lockType == XUiC_ItemStack.LockTypes.None && !(itemStackControllers[i] as XUiC_ItemStack).StackLock)
                 {
                     ++numUnlockedSlots;
                 }
@@ -166,7 +166,7 @@ internal class Patches
             int j = 0;
             for (int i = lockedSlots; i < itemStackControllers.Length; ++i)
             {
-                if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
+                if ((itemStackControllers[i] as XUiC_ItemStack).lockType == XUiC_ItemStack.LockTypes.None && !(itemStackControllers[i] as XUiC_ItemStack).StackLock)
                 {
                     items[j++] = ((XUiC_ItemStack)itemStackControllers[i]).ItemStack;
                 }
@@ -179,7 +179,7 @@ internal class Patches
             j = 0;
             for (int i = lockedSlots; i < itemStackControllers.Length; ++i)
             {
-                if (Traverse.Create(itemStackControllers[i]).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None && !((XUiC_ItemStack)itemStackControllers[i]).StackLock)
+                if ((itemStackControllers[i] as XUiC_ItemStack).lockType == XUiC_ItemStack.LockTypes.None && !(itemStackControllers[i] as XUiC_ItemStack).StackLock)
                 {
                     ((XUiC_ItemStack)itemStackControllers[i]).ItemStack = items[j++];
                 }
@@ -196,7 +196,7 @@ internal class Patches
         public static void Postfix(XUiC_BackpackWindow __instance)
         {
             QuickStack.backpackWindow = __instance;
-            QuickStack.playerBackpack = Traverse.Create(__instance).Field("backpackGrid").GetValue() as XUiC_Backpack;
+            QuickStack.playerBackpack = __instance.backpackGrid;
             XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
 
             QuickStack.lastClickTimes.Fill(0.0f);
@@ -213,12 +213,12 @@ internal class Patches
 
                     XUiC_ItemStack itemStack = _sender as XUiC_ItemStack;
 
-                    if (Traverse.Create(itemStack).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None)
+                    if (itemStack.lockType == XUiC_ItemStack.LockTypes.None)
                     {
-                        Traverse.Create(itemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
+                        itemStack.lockType = QuickStack.customLockEnum;
                         itemStack.RefreshBindings();
                     }
-                    else if (Traverse.Create(itemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
+                    else if (itemStack.lockType == QuickStack.customLockEnum)
                     {
                         int index = 0;
                         for (int k = 0; k < slots.Length; ++k)
@@ -233,7 +233,7 @@ internal class Patches
                         // If built-in slots are locked, disable unlocking by clicking
                         if (index >= QuickStack.stashLockedSlots())
                         {
-                            Traverse.Create(itemStack).Field("lockType").SetValue(XUiC_ItemStack.LockTypes.None);
+                            itemStack.lockType = XUiC_ItemStack.LockTypes.None;
                             itemStack.RefreshBindings();
                         }  
                     }
@@ -262,9 +262,9 @@ internal class Patches
             {
                 XUiC_ItemStack itemStack = (XUiC_ItemStack)slots[i];
 
-                if (Traverse.Create(itemStack).Field("lockType").GetValue<XUiC_ItemStack.LockTypes>() == XUiC_ItemStack.LockTypes.None)
+                if (itemStack.lockType == XUiC_ItemStack.LockTypes.None)
                 {
-                    Traverse.Create(itemStack).Field("lockType").SetValue(QuickStack.customLockEnum);
+                    itemStack.lockType = QuickStack.customLockEnum;
                     itemStack.RefreshBindings();
                 }
             }
@@ -274,9 +274,9 @@ internal class Patches
             {
                 XUiC_ItemStack itemStack = (XUiC_ItemStack)slots[i];
 
-                if (Traverse.Create(itemStack).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
+                if (itemStack.lockType == QuickStack.customLockEnum)
                 {
-                    Traverse.Create(itemStack).Field("lockType").SetValue(XUiC_ItemStack.LockTypes.None);
+                    itemStack.lockType = XUiC_ItemStack.LockTypes.None;
                     itemStack.RefreshBindings();
                 }
             }
@@ -297,8 +297,8 @@ internal class Patches
                     if (bindingName == "notlootingorvehiclestorage")
                     {
                         bool flag1 = __instance.xui.vehicle != null && __instance.xui.vehicle.GetVehicle().HasStorage();
-                        bool flag2 = __instance.xui.lootContainer != null && __instance.xui.lootContainer.entityId == -1;
-                        bool flag3 = __instance.xui.lootContainer != null && GameManager.Instance.World.GetEntity(__instance.xui.lootContainer.entityId) is EntityDrone;
+                        bool flag2 = __instance.xui.lootContainer != null && __instance.xui.lootContainer.EntityId == -1;
+                        bool flag3 = __instance.xui.lootContainer != null && GameManager.Instance.World.GetEntity(__instance.xui.lootContainer.EntityId) is EntityDrone;
                         value = (!flag1 && !flag2 && !flag3).ToString();
                         __result = true;
                     }
@@ -314,8 +314,8 @@ internal class Patches
         [HarmonyPostfix]
         public static void Postfix(XUiC_ItemStack __instance)
         {
-            if (Traverse.Create(__instance).Field("lockType").GetValue<int>() == QuickStack.customLockEnum)
-                Traverse.Create(__instance).Field("selectionBorderColor").SetValue(new Color32(128, 0, 0, 255));
+            if (__instance.lockType == QuickStack.customLockEnum)
+                __instance.selectionBorderColor = new Color32(128, 0, 0, 255);
         }
     }
 

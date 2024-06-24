@@ -41,12 +41,6 @@ class NetPackageFindOpenableContainers : NetPackage
             return;
         }
 
-        var lockedTileEntities = QuickStack.GetOpenedTiles();
-        if (lockedTileEntities == null)
-        {
-            return;
-        }
-
         List<Vector3i> openableEntities = new List<Vector3i>(256);
 
         var center = new Vector3i(playerEntity.position);
@@ -57,7 +51,7 @@ class NetPackageFindOpenableContainers : NetPackage
                 continue;
             }
             openableEntities.Add(centerEntityPair.Item1);
-            lockedTileEntities.Add(centerEntityPair.Item2, playerEntityId);
+            GameManager.Instance.lockedTileEntities.Add(centerEntityPair.Item2, playerEntityId);
         }
 
         if (openableEntities.Count > 0)

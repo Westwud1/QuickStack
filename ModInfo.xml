@@ -1,9 +1,10 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <xml>
-	<ModInfo>
-		<Name value="QuickStack" />
-		<Description value="Enables the player to quickly deposit/restock items from their inventory to nearby containers without the need to open them. Enables the player to lock specific slots." />
-		<Author value="Westwud" />
-		<Version value="1.6.5" />
-	</ModInfo>
+	<Name value="QuickStack"/>
+	<DisplayName value="QuickStack"/>
+	<Description value="Enables the player to quickly deposit/restock items from their inventory to nearby containers without the need to open them. Enables the player to lock specific slots."/>
+	<Author value="Westwud"/>
+	<Version value="1.6.6"/>
+	<Website value="https://www.nexusmods.com/7daystodie/mods/1357"/>
+	<SkipWithAntiCheat value="true" />
 </xml>

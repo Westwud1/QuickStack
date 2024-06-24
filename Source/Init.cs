@@ -13,7 +13,7 @@ public class QuickStackModApi : IModApi
         //Load config from QuickstackConfig.xml
         try
         {
-            string path = GamePrefs.GetString(EnumGamePrefs.UserDataFolder) + "/Mods/QuickStack";
+            string path = GamePrefs.GetString(EnumGamePrefs.UNUSED_UserDataFolder) + "/Mods/QuickStack";
             if (!Directory.Exists(path))
                 path = Directory.GetCurrentDirectory() + "/Mods/QuickStack";
 
@@ -49,7 +49,7 @@ public class QuickStackModApi : IModApi
         }
         catch
         {
-            Log.Warning("Failed to load or parse config for QuickStack");
+            Log.Warning("[QuickStack] Failed to load or parse config");
 
             QuickStack.quickLockHotkeys = new KeyCode[1];
             QuickStack.quickLockHotkeys[0] = KeyCode.LeftAlt;

@@ -19,20 +19,13 @@ class NetPackageUnlockContainers : NetPackageInvManageAction
             return;
         }
 
-        var lockedTileEntities = QuickStack.GetOpenedTiles();
-        if (lockedTileEntities == null)
-        {
-            return;
-        }
-
         foreach (var offset in containerEntities)
         {
             var entity = _world.GetTileEntity(0, center + offset);
             if (entity != null)
             {
-                lockedTileEntities.Remove(entity);
+                GameManager.Instance.lockedTileEntities.Remove(entity);
             }
         }
     }
-
 }
