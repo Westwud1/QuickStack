@@ -187,52 +187,68 @@ internal class QuickStack
     // SINGLEPLAYER ONLY
     public static void MoveQuickStack()
     {
-        if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.EntityId == -1)
-            return;
-
-        var moveKind = GetMoveKind();
-
-        EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
-
-        for (int i = -stashDistanceX; i <= stashDistanceX; i++)
+        try
         {
-            for (int j = -stashDistanceY; j <= stashDistanceY; j++)
+            if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.EntityId == -1)
+                return;
+
+            var moveKind = GetMoveKind();
+
+            EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
+
+            for (int i = -stashDistanceX; i <= stashDistanceX; i++)
             {
-                for (int k = -stashDistanceZ; k <= stashDistanceZ; k++)
+                for (int j = -stashDistanceY; j <= stashDistanceY; j++)
                 {
-                    Vector3i blockPos = new Vector3i((int)primaryPlayer.position.x + i, (int)primaryPlayer.position.y + j, (int)primaryPlayer.position.z + k);
+                    for (int k = -stashDistanceZ; k <= stashDistanceZ; k++)
+                    {
+                        Vector3i blockPos = new Vector3i((int)primaryPlayer.position.x + i, (int)primaryPlayer.position.y + j, (int)primaryPlayer.position.z + k);
 
-                    var val = GetInventoryFromBlockPosition(blockPos);
+                        var val = GetInventoryFromBlockPosition(blockPos);
 
-                    if (val.Item1 == null)
-                        continue;
+                        if (val.Item1 == null)
+                            continue;
 
-                    StashItems(backpackWindow, playerBackpack, val.Item1, moveKind);
-                    val.Item2.SetModified();
+                        StashItems(backpackWindow, playerBackpack, val.Item1, moveKind);
+                        val.Item2.SetModified();
+                    }
                 }
             }
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"[QuickStack] {e.Message}");
+            Log.Warning($"[QuickStack] {e.StackTrace}");
         }
     }
 
     public static void ClientMoveQuickStack(Vector3i center, IEnumerable<Vector3i> _entityContainers)
     {
-        if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.EntityId == -1)
-            return;
-
-        var moveKind = GetMoveKind();
-
-        if (_entityContainers == null)
-            return;
-
-        foreach (var offset in _entityContainers)
+        try
         {
-            var val = GetInventoryFromBlockPosition(center + offset);
+            if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.EntityId == -1)
+                return;
 
-            if (val.Item1 == null)
-                continue;
+            var moveKind = GetMoveKind();
 
-            StashItems(backpackWindow, playerBackpack, val.Item1, moveKind);
-            val.Item2.SetModified();
+            if (_entityContainers == null)
+                return;
+
+            foreach (var offset in _entityContainers)
+            {
+                var val = GetInventoryFromBlockPosition(center + offset);
+
+                if (val.Item1 == null)
+                    continue;
+
+                StashItems(backpackWindow, playerBackpack, val.Item1, moveKind);
+                val.Item2.SetModified();
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"[QuickStack] {e.Message}");
+            Log.Warning($"[QuickStack] {e.StackTrace}");
         }
     }
 
@@ -240,33 +256,41 @@ internal class QuickStack
     // SINGLEPLAYER ONLY
     public static void MoveQuickRestock()
     {
-        if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.EntityId == -1)
-            return;
-
-        var moveKind = GetMoveKind(QuickStackType.Restock);
-
-        EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
-        LocalPlayerUI playerUI = LocalPlayerUI.GetUIForPlayer(primaryPlayer);
-        XUiC_LootWindowGroup lootWindowGroup = (XUiC_LootWindowGroup)((XUiWindowGroup)playerUI.windowManager.GetWindow("looting")).Controller;
-
-        for (int i = -stashDistanceX; i <= stashDistanceX; i++)
+        try
         {
-            for (int j = -stashDistanceY; j <= stashDistanceY; j++)
+            if (backpackWindow.xui.lootContainer != null && backpackWindow.xui.lootContainer.EntityId == -1)
+                return;
+
+            var moveKind = GetMoveKind(QuickStackType.Restock);
+
+            EntityPlayerLocal primaryPlayer = GameManager.Instance.World.GetPrimaryPlayer();
+            LocalPlayerUI playerUI = LocalPlayerUI.GetUIForPlayer(primaryPlayer);
+            XUiC_LootWindowGroup lootWindowGroup = (XUiC_LootWindowGroup)((XUiWindowGroup)playerUI.windowManager.GetWindow("looting")).Controller;
+
+            for (int i = -stashDistanceX; i <= stashDistanceX; i++)
             {
-                for (int k = -stashDistanceZ; k <= stashDistanceZ; k++)
+                for (int j = -stashDistanceY; j <= stashDistanceY; j++)
                 {
-                    Vector3i blockPos = new Vector3i((int)primaryPlayer.position.x + i, (int)primaryPlayer.position.y + j, (int)primaryPlayer.position.z + k);
+                    for (int k = -stashDistanceZ; k <= stashDistanceZ; k++)
+                    {
+                        Vector3i blockPos = new Vector3i((int)primaryPlayer.position.x + i, (int)primaryPlayer.position.y + j, (int)primaryPlayer.position.z + k);
 
-                    var val = GetInventoryFromBlockPosition(blockPos);
+                        var val = GetInventoryFromBlockPosition(blockPos);
 
-                    if (val.Item1 == null)
-                        continue;
+                        if (val.Item1 == null)
+                            continue;
 
-                    lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-                    StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, primaryPlayer.bag, moveKind);
-                    val.Item2.SetModified();
+                        lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
+                        StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, primaryPlayer.bag, moveKind);
+                        val.Item2.SetModified();
+                    }
                 }
             }
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"[QuickStack] {e.Message}");
+            Log.Warning($"[QuickStack] {e.StackTrace}");
         }
     }
 
@@ -366,58 +390,74 @@ internal class QuickStack
     // UI Delegates
     public static void QuickStackOnClick()
     {
-        // Singleplayer
-        if (ConnectionManager.Instance.IsSinglePlayer)
+        try
         {
-            MoveQuickStack();
-            // Multiplayer (Client)
-        }
-        else if (!ConnectionManager.Instance.IsServer)
-        {
-            ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageFindOpenableContainers>().Setup(GameManager.Instance.World.GetPrimaryPlayerId(), QuickStackType.Stack));
-            // Multiplayer (Host)
-        }
-        else if (!GameManager.IsDedicatedServer)
-        {
-            // But we do the steps of Multiplayer quick stack in-place because
-            // The host has access to locking functions
-            var player = GameManager.Instance.World.GetPrimaryPlayer();
-            var center = new Vector3i(player.position);
-            List<Vector3i> offsets = new List<Vector3i>(1024);
-            foreach (var pair in FindNearbyLootContainers(center, player.entityId))
+            // Singleplayer
+            if (ConnectionManager.Instance.IsSinglePlayer)
             {
-                offsets.Add(pair.Item1);
+                MoveQuickStack();
+                // Multiplayer (Client)
             }
-            ClientMoveQuickStack(center, offsets);
+            else if (!ConnectionManager.Instance.IsServer)
+            {
+                ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageFindOpenableContainers>().Setup(GameManager.Instance.World.GetPrimaryPlayerId(), QuickStackType.Stack));
+                // Multiplayer (Host)
+            }
+            else if (!GameManager.IsDedicatedServer)
+            {
+                // But we do the steps of Multiplayer quick stack in-place because
+                // The host has access to locking functions
+                var player = GameManager.Instance.World.GetPrimaryPlayer();
+                var center = new Vector3i(player.position);
+                List<Vector3i> offsets = new List<Vector3i>(1024);
+                foreach (var pair in FindNearbyLootContainers(center, player.entityId))
+                {
+                    offsets.Add(pair.Item1);
+                }
+                ClientMoveQuickStack(center, offsets);
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"[QuickStack] {e.Message}");
+            Log.Warning($"[QuickStack] {e.StackTrace}");
         }
     }
 
     public static void QuickRestockOnClick()
     {
-        // Singleplayer
-        if (ConnectionManager.Instance.IsSinglePlayer)
+        try
         {
-            MoveQuickRestock();
-            // Multiplayer (Client)
-        }
-        else if (!ConnectionManager.Instance.IsServer)
-        {
-            ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageFindOpenableContainers>().Setup(GameManager.Instance.World.GetPrimaryPlayerId(), QuickStackType.Restock));
-            // Multiplayer (Host)
-        }
-        else if (!GameManager.IsDedicatedServer)
-        {
-            // TODO: could be cleaned up a bit...
-            // But we do the steps of Multiplayer quick stack in-place because
-            // The host has access to locking functions
-            var player = GameManager.Instance.World.GetPrimaryPlayer();
-            var center = new Vector3i(player.position);
-            List<Vector3i> offsets = new List<Vector3i>(1024);
-            foreach (var pair in FindNearbyLootContainers(center, player.entityId))
+            // Singleplayer
+            if (ConnectionManager.Instance.IsSinglePlayer)
             {
-                offsets.Add(pair.Item1);
+                MoveQuickRestock();
+                // Multiplayer (Client)
             }
-            ClientMoveQuickRestock(center, offsets);
+            else if (!ConnectionManager.Instance.IsServer)
+            {
+                ConnectionManager.Instance.SendToServer(NetPackageManager.GetPackage<NetPackageFindOpenableContainers>().Setup(GameManager.Instance.World.GetPrimaryPlayerId(), QuickStackType.Restock));
+                // Multiplayer (Host)
+            }
+            else if (!GameManager.IsDedicatedServer)
+            {
+                // TODO: could be cleaned up a bit...
+                // But we do the steps of Multiplayer quick stack in-place because
+                // The host has access to locking functions
+                var player = GameManager.Instance.World.GetPrimaryPlayer();
+                var center = new Vector3i(player.position);
+                List<Vector3i> offsets = new List<Vector3i>(1024);
+                foreach (var pair in FindNearbyLootContainers(center, player.entityId))
+                {
+                    offsets.Add(pair.Item1);
+                }
+                ClientMoveQuickRestock(center, offsets);
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"[QuickStack] {e.Message}");
+            Log.Warning($"[QuickStack] {e.StackTrace}");
         }
     }
 
