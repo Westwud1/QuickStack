@@ -4,11 +4,13 @@
 	<QuickStackButtons>308 120</QuickStackButtons>
 	<QuickRestockButtons>308 122</QuickRestockButtons>
 
-	<!-- X and Z are forwards/backwards/sideways and Y is up/down. Prefer to have X and Z the same value. -->
+	<!-- Format is (X, Y, Z). X and Z are forwards/backwards/sideways and Y is up/down. Prefer to have X and Z the same value. -->
 	<!-- If the values are (7, 7, 7), that means you have a 15x15x15 box centered on your player that you can quick stack/restock. -->
-	<QuickStashDistanceX>7</QuickStashDistanceX> 
-	<QuickStashDistanceY>7</QuickStashDistanceY>
-	<QuickStashDistanceZ>7</QuickStashDistanceZ>
+	<QuickStashDistance>7 7 7</QuickStashDistance>
+
+	<!-- Format is (Red, Green, Blue, Alpha). Values range between 0 and 255. Set the Alpha to 0 to make the borders disappear if you don't like them -->
+	<!-- You can use something like google color picker to find a color you like: https://g.co/kgs/qzp9BgE -->
+	<LockedSlotsColor>255 255 0 255</LockedSlotsColor>
 </xml>
 
 <!--

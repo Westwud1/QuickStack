@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml;
 using HarmonyLib;
 using UnityEngine;
 
@@ -24,6 +25,7 @@ internal class QuickStack
     public static KeyCode[] quickLockHotkeys;
     public static KeyCode[] quickStackHotkeys;
     public static KeyCode[] quickRestockHotkeys;
+    public static Color32 borderColor = new Color32(128, 0, 0, 255);
 
     public static int stashLockedSlots()
     {
@@ -538,11 +540,77 @@ internal class QuickStack
                         (slots[i] as XUiC_ItemStack).lockType = (XUiC_ItemStack.LockTypes)customLockEnum;
                 }
             }
-            Log.Out($"[QuickStack] Loaded locked slots config in {stopwatch.ElapsedMilliseconds} ms");
+            Log.Out($"[QuickStack] Loaded locked slots in {stopwatch.ElapsedMilliseconds} ms");
         }
         catch (Exception e)
         {
-            Log.Warning($"[QuickStack] Failed to read locked slots config:  {e.Message}. Slots will default to unlocked");
+            Log.Warning($"[QuickStack] Failed to read locked slots: {e.Message}. Slots will default to unlocked");
+        }
+    }
+
+    public static void LoadConfig()
+    {
+        //Load config from QuickstackConfig.xml
+        try
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            string path = GamePrefs.GetString(EnumGamePrefs.UNUSED_UserDataFolder) + "/Mods/QuickStack";
+            if (!Directory.Exists(path))
+                path = Directory.GetCurrentDirectory() + "/Mods/QuickStack";
+
+            XmlDocument xml = new XmlDocument();
+            xml.Load(path + "/QuickStackConfig.xml");
+
+            string[] quickLockButtons = xml.GetElementsByTagName("QuickLockButtons")[0].InnerText.Trim().Split(' ');
+            QuickStack.quickLockHotkeys = new KeyCode[quickLockButtons.Length];
+            for (int i = 0; i < quickLockButtons.Length; i++)
+                QuickStack.quickLockHotkeys[i] = (KeyCode)int.Parse(quickLockButtons[i]);
+
+            string[] quickStackButtons = xml.GetElementsByTagName("QuickStackButtons")[0].InnerText.Trim().Split(' ');
+            QuickStack.quickStackHotkeys = new KeyCode[quickStackButtons.Length];
+            for (int i = 0; i < quickStackButtons.Length; i++)
+                QuickStack.quickStackHotkeys[i] = (KeyCode)int.Parse(quickStackButtons[i]);
+
+            string[] quickRestockButtons = xml.GetElementsByTagName("QuickRestockButtons")[0].InnerText.Trim().Split(' ');
+            QuickStack.quickRestockHotkeys = new KeyCode[quickRestockButtons.Length];
+            for (int i = 0; i < quickRestockButtons.Length; i++)
+                QuickStack.quickRestockHotkeys[i] = (KeyCode)int.Parse(quickRestockButtons[i]);
+
+            string[] stashDistance = xml.GetElementsByTagName("QuickStashDistance")[0].InnerText.Trim().Split(' ');
+            QuickStack.stashDistanceX = Math.Min(Math.Max(QuickStack.stashDistanceX, 0), 127);
+            QuickStack.stashDistanceY = Math.Min(Math.Max(QuickStack.stashDistanceY, 0), 127);
+            QuickStack.stashDistanceZ = Math.Min(Math.Max(QuickStack.stashDistanceZ, 0), 127);
+
+            string[] borderColor = xml.GetElementsByTagName("LockedSlotsColor")[0].InnerText.Trim().Split(' ');
+            byte r = Byte.Parse(borderColor[0]);
+            byte g = Byte.Parse(borderColor[1]);
+            byte b = Byte.Parse(borderColor[2]);
+            byte a = Byte.Parse(borderColor[3]);
+            QuickStack.borderColor = new Color32(r, g, b, a);
+
+            Log.Out($"[QuickStack] Loaded config in {stopwatch.ElapsedMilliseconds} ms");
+        }
+        catch
+        {
+            QuickStack.quickLockHotkeys = new KeyCode[1];
+            QuickStack.quickLockHotkeys[0] = KeyCode.LeftAlt;
+
+            QuickStack.quickStackHotkeys = new KeyCode[2];
+            QuickStack.quickStackHotkeys[0] = KeyCode.LeftAlt;
+            QuickStack.quickStackHotkeys[1] = KeyCode.X;
+
+            QuickStack.quickRestockHotkeys = new KeyCode[2];
+            QuickStack.quickRestockHotkeys[0] = KeyCode.LeftAlt;
+            QuickStack.quickRestockHotkeys[1] = KeyCode.Z;
+
+            QuickStack.stashDistanceX = 7;
+            QuickStack.stashDistanceY = 7;
+            QuickStack.stashDistanceZ = 7;
+
+            QuickStack.borderColor = new Color32(128, 0, 0, 255);
+
+            Log.Warning("[QuickStack] Failed to load or parse config");
         }
     }
 }

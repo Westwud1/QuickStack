@@ -71,6 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Source\ConsoleCmdReloadQuickstack.cs" />
     <Compile Include="Source\NetPackages\NetPackageDoQuickStack.cs" />
     <Compile Include="Source\NetPackages\NetPackageFindOpenableContainers.cs" />
     <Compile Include="Source\NetPackages\NetPackageInvManageAction.cs" />

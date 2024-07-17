@@ -5,7 +5,7 @@ using UnityEngine;
 
 internal class Patches
 {
-    //This patch is used to initialize the UI functionallity for the quickstack and restock buttons.
+    //This patch is used to initialize the UI functionality for the quickstack and restock buttons.
     [HarmonyPatch(typeof(XUiC_ContainerStandardControls), "Init")]
     private class QS_01
     {
@@ -189,7 +189,7 @@ internal class Patches
         }
     }
 
-    //This patch is used to initialize the functionallity for the slot locking mechanism and load saved locked slots.
+    //This patch is used to initialize the functionality for the slot locking mechanism and load saved locked slots.
     [HarmonyPatch(typeof(XUiC_BackpackWindow), "Init")]
     private class QS_07
     {
@@ -315,11 +315,11 @@ internal class Patches
         public static void Postfix(XUiC_ItemStack __instance)
         {
             if (__instance.lockType == QuickStack.customLockEnum)
-                __instance.selectionBorderColor = new Color32(128, 0, 0, 255);
+                __instance.selectionBorderColor = QuickStack.borderColor;
         }
     }
 
-    //QuickStack and Restock functionallity by pressing hotkeys (useful if other mods remove the UI buttons)
+    //QuickStack and Restock functionality by pressing hotkeys (useful if other mods remove the UI buttons)
     [HarmonyPatch(typeof(GameManager), "UpdateTick")]
     private class QS_11
     {
