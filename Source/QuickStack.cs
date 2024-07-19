@@ -254,7 +254,7 @@ internal class QuickStack
         }
     }
 
-    //Restock functionallity
+    //Restock functionality
     // SINGLEPLAYER ONLY
     public static void MoveQuickRestock()
     {
@@ -283,7 +283,8 @@ internal class QuickStack
                             continue;
 
                         lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-                        StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, primaryPlayer.bag, moveKind);
+                        StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, moveKind);
+                        
                         val.Item2.SetModified();
                     }
                 }
@@ -318,7 +319,7 @@ internal class QuickStack
                 continue;
 
             lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-            StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, primaryPlayer.bag, moveKind);
+            StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, moveKind);
             val.Item2.SetModified();
         }
     }
@@ -555,7 +556,7 @@ internal class QuickStack
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            string path = GamePrefs.GetString(EnumGamePrefs.UNUSED_UserDataFolder) + "/Mods/QuickStack";
+            string path = GameIO.GetDefaultUserGameDataDir() + "/Mods/QuickStack";
             if (!Directory.Exists(path))
                 path = Directory.GetCurrentDirectory() + "/Mods/QuickStack";
 

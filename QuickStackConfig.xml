@@ -10,7 +10,7 @@
 
 	<!-- Format is (Red, Green, Blue, Alpha). Values range between 0 and 255. Set the Alpha to 0 to make the borders disappear if you don't like them -->
 	<!-- You can use something like google color picker to find a color you like: https://g.co/kgs/qzp9BgE -->
-	<LockedSlotsColor>255 255 0 255</LockedSlotsColor>
+	<LockedSlotsColor>128 0 0 255</LockedSlotsColor>
 </xml>
 
 <!--
