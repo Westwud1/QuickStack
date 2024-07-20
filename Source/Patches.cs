@@ -5,7 +5,7 @@ using UnityEngine;
 
 internal class Patches
 {
-    //This patch is used to initialize the UI functionality for the quickstack and restock buttons.
+    // This patch is used to initialize the UI functionality for the quickstack and restock buttons.
     [HarmonyPatch(typeof(XUiC_ContainerStandardControls), "Init")]
     private class QS_1
     {
@@ -37,7 +37,7 @@ internal class Patches
         }
     }
 
-    //This patch is used to initialize the functionality for the slot locking mechanism and load saved locked slots.
+    // This patch is used to initialize the functionality for the slot locking mechanism and load saved locked slots.
     [HarmonyPatch(typeof(XUiC_BackpackWindow), "Init")]
     private class QS_2
     {
@@ -69,8 +69,8 @@ internal class Patches
         }
     }
 
-    //This patch is used to add a binding to know whether the player is not accessing other loot container inventories with some exceptions like workstations.
-    //This is used in the xml file to make the quickstack icon visible only when the player inventory is open.
+    // This patch is used to add a binding to know whether the player is not accessing other loot container inventories with some exceptions like workstations.
+    // This is used in the xml file to make the quickstack icon visible only when the player inventory is open.
     [HarmonyPatch(typeof(XUiC_BackpackWindow), "GetBindingValue")]
     private class QS_3
     {
@@ -93,7 +93,7 @@ internal class Patches
         }
     }
 
-    //QuickStack and Restock functionality by pressing hotkeys (useful if other mods remove the UI buttons)
+    // QuickStack and Restock functionality by pressing hotkeys (useful if other mods remove the UI buttons)
     [HarmonyPatch(typeof(GameManager), "UpdateTick")]
     private class QS_4
     {
@@ -124,7 +124,7 @@ internal class Patches
         }
     }
 
-    //This patch is used to update the slot color in the backpack if the slot is locked by the player.
+    // This patch is used to update the slot color in the backpack if the slot is locked by the player.
     [HarmonyPatch(typeof(XUiC_ItemStack), "updateBorderColor")]
     private class QS_5
     {

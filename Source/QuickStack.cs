@@ -173,7 +173,7 @@ internal class QuickStack
         }
     }
 
-    //Quickstack functionality
+    // Quickstack functionality
     // SINGLEPLAYER ONLY
     public static void MoveQuickStack()
     {
@@ -242,7 +242,7 @@ internal class QuickStack
         }
     }
 
-    //Restock functionality
+    // Restock functionality
     // SINGLEPLAYER ONLY
     public static void MoveQuickRestock()
     {
@@ -394,13 +394,13 @@ internal class QuickStack
 
         for (int i = 0; i < slots.Length; ++i)
         {
-            (slots[i].GetChildById("iconSlotLock").ViewComponent as XUiV_Sprite).Color = QuickStack.lockIconColor;
+            (slots[i].GetChildById("iconSlotLock").ViewComponent as XUiV_Sprite).Color = lockIconColor;
         }
     }
 
     public static void LoadConfig()
     {
-        //Load config from QuickstackConfig.xml
+        // Load config from QuickstackConfig.xml
         try
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
