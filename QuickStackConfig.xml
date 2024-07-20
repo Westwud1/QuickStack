@@ -8,9 +8,13 @@
 	<!-- If the values are (7, 7, 7), that means you have a 15x15x15 box centered on your player that you can quick stack/restock. -->
 	<QuickStashDistance>7 7 7</QuickStashDistance>
 
-	<!-- Format is (Red, Green, Blue, Alpha). Values range between 0 and 255. Set the Alpha to 0 to make the borders disappear if you don't like them -->
+	<!-- Icon color: Format is (Red, Green, Blue, Alpha). Values range between 0 and 255. Setting the Alpha to 0 will make the icon invisible -->
 	<!-- You can use something like google color picker to find a color you like: https://g.co/kgs/qzp9BgE -->
-	<LockedSlotsColor>128 0 0 255</LockedSlotsColor>
+	<LockedSlotsIconColor>255 0 0 255</LockedSlotsIconColor>
+
+	<!-- Border color: Format is (Red, Green, Blue, Alpha). Values range between 0 and 255. Setting the Alpha to 0 will make the border invisible -->
+	<!-- You can use something like google color picker to find a color you like: https://g.co/kgs/qzp9BgE -->
+	<LockedSlotsBorderColor>128 0 0 0</LockedSlotsBorderColor>
 </xml>
 
 <!--

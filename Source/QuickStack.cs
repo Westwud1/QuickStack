@@ -21,23 +21,11 @@ internal class QuickStack
     public static XUiC_Backpack playerBackpack;
     public static XUiC_BackpackWindow backpackWindow;
     public static XUiC_ContainerStandardControls playerControls;
-    public static XUiC_ItemStack.LockTypes customLockEnum = XUiC_ItemStack.LockTypes.Burning + 1; //XUiC_ItemStack.LockTypes - Last used is Burning with value 5, so we use 6 for our custom locked slots
     public static KeyCode[] quickLockHotkeys;
     public static KeyCode[] quickStackHotkeys;
     public static KeyCode[] quickRestockHotkeys;
-    public static Color32 borderColor = new Color32(128, 0, 0, 255);
-
-    public static int stashLockedSlots()
-    {
-        return playerControls.xui.playerUI.entityPlayer.bag.LockedSlots;
-    }
-
-    public static string lockedSlotsFile()
-    {
-        if (ConnectionManager.Instance.IsSinglePlayer)
-            return Path.Combine(GameIO.GetPlayerDataDir(), GameManager.Instance.persistentLocalPlayer.PrimaryId + ".qsls");
-        return Path.Combine(GameIO.GetPlayerDataLocalDir(), GameManager.Instance.persistentLocalPlayer.PrimaryId + ".qsls");
-    }
+    public static Color32 lockIconColor = new Color32(128, 128, 128, 255);
+    public static Color32 lockBorderColor = new Color32(0, 0, 0, 0);
 
     // Checks if a loot container is openable by a player
     // HOST OR SERVER ONLY
@@ -211,7 +199,7 @@ internal class QuickStack
                         if (val.Item1 == null)
                             continue;
 
-                        StashItems(backpackWindow, playerBackpack, val.Item1, moveKind);
+                        XUiM_LootContainer.StashItems(backpackWindow, playerBackpack, val.Item1, 0, playerControls.LockedSlots, moveKind, playerControls.MoveStartBottomRight);
                         val.Item2.SetModified();
                     }
                 }
@@ -243,7 +231,7 @@ internal class QuickStack
                 if (val.Item1 == null)
                     continue;
 
-                StashItems(backpackWindow, playerBackpack, val.Item1, moveKind);
+                XUiM_LootContainer.StashItems(backpackWindow, playerBackpack, val.Item1, 0, playerControls.LockedSlots, moveKind, playerControls.MoveStartBottomRight);
                 val.Item2.SetModified();
             }
         }
@@ -283,8 +271,7 @@ internal class QuickStack
                             continue;
 
                         lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-                        StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, moveKind);
-                        
+                        XUiM_LootContainer.StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, 0, playerControls.LockedSlots, moveKind, playerControls.MoveStartBottomRight);
                         val.Item2.SetModified();
                     }
                 }
@@ -319,75 +306,9 @@ internal class QuickStack
                 continue;
 
             lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-            StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, moveKind);
+            XUiM_LootContainer.StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, 0, playerControls.LockedSlots, moveKind, playerControls.MoveStartBottomRight);
             val.Item2.SetModified();
         }
-    }
-
-    //Refactored from the original code to remove stash time due to quick stack/restock and check for custom locks
-    public static ValueTuple<bool, bool> StashItems(XUiController _srcWindow, XUiC_ItemStackGrid _srcGrid, IInventory _dstInventory, XUiM_LootContainer.EItemMoveKind _moveKind)
-    {
-        if (_srcGrid == null || _dstInventory == null)
-        {
-            return new ValueTuple<bool, bool>(false, false);
-        }
-        XUiController[] itemStackControllers = _srcGrid.GetItemStackControllers();
-
-        bool item = true;
-        bool item2 = false;
-
-        PreferenceTracker preferenceTracker = null;
-        XUiC_LootWindow xuiC_LootWindow = _srcWindow as XUiC_LootWindow;
-        if (xuiC_LootWindow != null)
-        {
-            preferenceTracker = xuiC_LootWindow.GetPreferenceTrackerFromTileEntity();
-        }
-        if (preferenceTracker != null && preferenceTracker.AnyPreferences)
-        {
-            XUiM_PlayerInventory xuiM_PlayerInventory = _dstInventory as XUiM_PlayerInventory;
-            if (xuiM_PlayerInventory != null)
-            {
-                item2 = xuiM_PlayerInventory.AddItemsUsingPreferenceTracker(_srcGrid, preferenceTracker);
-            }
-        }
-
-        for (int i=0;i<itemStackControllers.Length;++i)
-        {
-            XUiC_ItemStack xuiC_ItemStack = (XUiC_ItemStack)itemStackControllers[i];
-
-            if (xuiC_ItemStack.StackLock)
-                continue;
-
-            if (xuiC_ItemStack.lockType == QuickStack.customLockEnum)
-                continue;
-
-            ItemStack itemStack = xuiC_ItemStack.ItemStack;
-            if (xuiC_ItemStack.ItemStack.IsEmpty())
-                continue;
-
-            int count = itemStack.count;
-            _dstInventory.TryStackItem(0, itemStack);
-
-            if (itemStack.count > 0 && (_moveKind == XUiM_LootContainer.EItemMoveKind.All || (_moveKind == XUiM_LootContainer.EItemMoveKind.FillAndCreate && _dstInventory.HasItem(itemStack.itemValue))) && _dstInventory.AddItem(itemStack))
-            {
-                itemStack = ItemStack.Empty.Clone();
-            }
-            if (itemStack.count == 0)
-            {
-                itemStack = ItemStack.Empty.Clone();
-            }
-            else
-            {
-                item = false;
-            }
-            if (count != itemStack.count)
-            {
-                xuiC_ItemStack.ForceSetItemStack(itemStack);
-                item2 = true;
-            }
-        }
-
-        return new ValueTuple<bool, bool>(item, item2);
     }
 
     // UI Delegates
@@ -464,88 +385,16 @@ internal class QuickStack
         }
     }
 
-    /* 
-     * Binary format:
-     * [int32] locked slots - built-in locking mechanism compatibility
-     * [int32] array count (N) of locked slots by us
-     * [N bytes] boolean array indicating locked slots
-     */
-    public static void SaveLockedSlots()
+    public static void SetLockIconColor()
     {
-        try
+        if (playerBackpack == null)
+            return;
+
+        XUiController[] slots = playerBackpack.GetItemStackControllers();
+
+        for (int i = 0; i < slots.Length; ++i)
         {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            XUiController[] slots = playerBackpack.GetItemStackControllers();
-
-            using (BinaryWriter binWriter = new BinaryWriter(File.Open(lockedSlotsFile(), FileMode.Create)))
-            {
-                binWriter.Write(playerControls.stashLockedSlots);
-
-                binWriter.Write(slots.Length);
-                for (int i = 0; i < slots.Length; i++)
-                    binWriter.Write((slots[i] as XUiC_ItemStack).lockType == customLockEnum);
-            }
-            Log.Out($"[QuickStack] Saved locked slots config in {stopwatch.ElapsedMilliseconds} ms");
-        }
-        catch (Exception e)
-        {
-            Log.Warning($"[QuickStack] Failed to write locked slots file: {e.Message}. Slot states will not be saved!");
-        }
-    }
-
-    public static void LoadLockedSlots()
-    {
-        try
-        {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            string path = lockedSlotsFile();
-            if (!File.Exists(path))
-            {
-                Log.Warning("[QuickStack] No locked slots config detected. Slots will default to unlocked");
-                return;
-            }
-
-            // reported number of locked slots
-            long reportedLength = new FileInfo(path).Length - sizeof(int) * 2;
-            if (reportedLength < 0)
-            {
-                // file is too small to process
-                Log.Warning("[QuickStack] locked slots config appears corrupted. Slots will be defaulted to unlocked");
-                return;
-            }
-
-            using (BinaryReader binReader = new BinaryReader(File.Open(path, FileMode.Open)))
-            {
-                // locked slots saved by the unused combobox some mods may enable
-                int comboLockedSlots = Math.Max(0, binReader.ReadInt32());
-
-                // locked slots saved by us
-                int quickStackLockedSlots = binReader.ReadInt32();
-                if (reportedLength != quickStackLockedSlots * sizeof(bool))
-                {
-                    Log.Warning("[QuickStack] locked slots config appears corrupted. Slots will be defaulted to unlocked");
-                    return;
-                }
-
-                // Built-in locking mechanism compatibility
-                if (playerControls.GetChildById("cbxLockedSlots") is XUiC_ComboBoxInt comboBox)
-                {
-                    comboBox.Value = comboLockedSlots;
-                    playerControls.ChangeLockedSlots(comboLockedSlots);
-                }
-
-                XUiController[] slots = playerBackpack.GetItemStackControllers();
-                for (int i = 0; i < Math.Min(quickStackLockedSlots, slots.Length); i++)
-                {
-                    if (binReader.ReadBoolean())
-                        (slots[i] as XUiC_ItemStack).lockType = (XUiC_ItemStack.LockTypes)customLockEnum;
-                }
-            }
-            Log.Out($"[QuickStack] Loaded locked slots in {stopwatch.ElapsedMilliseconds} ms");
-        }
-        catch (Exception e)
-        {
-            Log.Warning($"[QuickStack] Failed to read locked slots: {e.Message}. Slots will default to unlocked");
+            (slots[i].GetChildById("iconSlotLock").ViewComponent as XUiV_Sprite).Color = QuickStack.lockIconColor;
         }
     }
 
@@ -556,12 +405,16 @@ internal class QuickStack
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            string path = GameIO.GetDefaultUserGameDataDir() + "/Mods/QuickStack";
-            if (!Directory.Exists(path))
-                path = Directory.GetCurrentDirectory() + "/Mods/QuickStack";
+            string path = GameIO.GetDefaultUserGameDataDir() + "/Mods/QuickStack/QuickStackConfig.xml";
+
+            if (!File.Exists(path))
+                path = Directory.GetCurrentDirectory() + "/Mods/QuickStack/QuickStackConfig.xml";
+
+            if (!File.Exists(path))
+                throw new Exception("Unable to find QuickStackConfig.xml");
 
             XmlDocument xml = new XmlDocument();
-            xml.Load(path + "/QuickStackConfig.xml");
+            xml.Load(path);
 
             string[] quickLockButtons = xml.GetElementsByTagName("QuickLockButtons")[0].InnerText.Trim().Split(' ');
             QuickStack.quickLockHotkeys = new KeyCode[quickLockButtons.Length];
@@ -583,16 +436,17 @@ internal class QuickStack
             QuickStack.stashDistanceY = Math.Min(Math.Max(QuickStack.stashDistanceY, 0), 127);
             QuickStack.stashDistanceZ = Math.Min(Math.Max(QuickStack.stashDistanceZ, 0), 127);
 
-            string[] borderColor = xml.GetElementsByTagName("LockedSlotsColor")[0].InnerText.Trim().Split(' ');
-            byte r = Byte.Parse(borderColor[0]);
-            byte g = Byte.Parse(borderColor[1]);
-            byte b = Byte.Parse(borderColor[2]);
-            byte a = Byte.Parse(borderColor[3]);
-            QuickStack.borderColor = new Color32(r, g, b, a);
+            string[] iconColor = xml.GetElementsByTagName("LockedSlotsIconColor")[0].InnerText.Trim().Split(' ');
+            QuickStack.lockIconColor = new Color32(Byte.Parse(iconColor[0]), Byte.Parse(iconColor[1]), Byte.Parse(iconColor[2]), Byte.Parse(iconColor[3]));
+
+            string[] borderColor = xml.GetElementsByTagName("LockedSlotsBorderColor")[0].InnerText.Trim().Split(' ');
+            QuickStack.lockBorderColor = new Color32(Byte.Parse(borderColor[0]), Byte.Parse(borderColor[1]), Byte.Parse(borderColor[2]), Byte.Parse(borderColor[3]));
+
+            SetLockIconColor();
 
             Log.Out($"[QuickStack] Loaded config in {stopwatch.ElapsedMilliseconds} ms");
         }
-        catch
+        catch (Exception e)
         {
             QuickStack.quickLockHotkeys = new KeyCode[1];
             QuickStack.quickLockHotkeys[0] = KeyCode.LeftAlt;
@@ -609,8 +463,11 @@ internal class QuickStack
             QuickStack.stashDistanceY = 7;
             QuickStack.stashDistanceZ = 7;
 
-            QuickStack.borderColor = new Color32(128, 0, 0, 255);
+            QuickStack.lockIconColor = new Color32(128, 128, 128, 255);
+            QuickStack.lockBorderColor = new Color32(0, 0, 0, 0);
 
+            Log.Warning($"[QuickStack] {e.Message}");
+            Log.Warning($"[QuickStack] {e.StackTrace}");
             Log.Warning("[QuickStack] Failed to load or parse config");
         }
     }
