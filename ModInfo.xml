@@ -4,7 +4,7 @@
 	<DisplayName value="QuickStack"/>
 	<Description value="Enables the player to quickly deposit/restock items from their inventory to nearby containers without the need to open them."/>
 	<Author value="Westwud"/>
-	<Version value="1.6.8"/>
+	<Version value="1.6.9"/>
 	<Website value="https://www.nexusmods.com/7daystodie/mods/1357"/>
 	<SkipWithAntiCheat value="true" />
 </xml>

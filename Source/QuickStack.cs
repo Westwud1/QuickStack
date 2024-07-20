@@ -271,7 +271,9 @@ internal class QuickStack
                             continue;
 
                         lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-                        XUiM_LootContainer.StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, 0, playerControls.LockedSlots, moveKind, playerControls.MoveStartBottomRight);
+                        bool[] lockedSlots = new bool[lootWindowGroup.lootWindow.lootContainer.items.Length];
+                        lockedSlots.Fill(false);
+                        XUiM_LootContainer.StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, 0, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
                         val.Item2.SetModified();
                     }
                 }
@@ -306,7 +308,9 @@ internal class QuickStack
                 continue;
 
             lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-            XUiM_LootContainer.StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, 0, playerControls.LockedSlots, moveKind, playerControls.MoveStartBottomRight);
+            bool[] lockedSlots = new bool[lootWindowGroup.lootWindow.lootContainer.items.Length];
+            lockedSlots.Fill(false);
+            XUiM_LootContainer.StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, 0, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
             val.Item2.SetModified();
         }
     }
@@ -387,14 +391,22 @@ internal class QuickStack
 
     public static void SetLockIconColor()
     {
-        if (playerBackpack == null)
-            return;
-
-        XUiController[] slots = playerBackpack.GetItemStackControllers();
-
-        for (int i = 0; i < slots.Length; ++i)
+        try
         {
-            (slots[i].GetChildById("iconSlotLock").ViewComponent as XUiV_Sprite).Color = lockIconColor;
+            if (playerBackpack == null)
+                return;
+
+            XUiController[] slots = playerBackpack.GetItemStackControllers();
+
+            for (int i = 0; i < slots.Length; ++i)
+            {
+                (slots[i].GetChildById("iconSlotLock").ViewComponent as XUiV_Sprite).Color = QuickStack.lockIconColor;
+            }
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"[QuickStack] {e.Message}");
+            Log.Warning($"[QuickStack] {e.StackTrace}");
         }
     }
 
