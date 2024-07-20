@@ -1,10 +1,19 @@
 <configs>
 	<append xpath="/windows/window[@name='windowBackpack']/panel[@name='header']/rect">
 		<rect pos="0, 0" visible="{notlootingorvehiclestorage}">
+			<!-- The new position of mod icons in the backpack. -->
 			<button depth="3" name="btnMoveQuickRestock" sprite="ui_game_symbol_quickrestock" tooltip_key="lblStashQuickRestock" pos="100, -22" style="icon32px, press, hover" pivot="center" sound="[paging_click]"/>
 			<button depth="3" name="btnMoveQuickStack" sprite="ui_game_symbol_quickstack" tooltip_key="lblStashQuickStack" pos="150, -22" style="icon32px, press, hover" pivot="center" sound="[paging_click]"/>
+			<!-- The old position of mod icons in the backpack. -->
+			<!-- <button depth="3" name="btnMoveQuickRestock" sprite="ui_game_symbol_quickrestock" tooltip_key="lblStashQuickRestock" pos="40, -22" style="icon32px, press, hover" pivot="center" sound="[paging_click]"/>
+			<button depth="3" name="btnMoveQuickStack" sprite="ui_game_symbol_quickstack" tooltip_key="lblStashQuickStack" pos="80, -22" style="icon32px, press, hover" pivot="center" sound="[paging_click]"/> -->
 		</rect>	
 	</append>
+
+	<!-- The old position of vanilla icons in the backpack. -->
+	<!-- <set xpath="/windows/window[@name='windowBackpack']/panel[@name='header']/rect/button[@name='btnSort']/@pos">0, -22</set>
+	<set xpath="/windows/window[@name='windowBackpack']/panel[@name='header']/rect/rect/button[@name='btnMoveAll']/@pos">80, -22</set>
+	<set xpath="/windows/window[@name='windowBackpack']/panel[@name='header']/rect/rect/button[@name='btnMoveFillAndSmart']/@pos">40, -22</set> -->
 
 	<!-- Uncomment this next line if you want the vanilla lock mode icon removed -->
 	<!-- <remove xpath="/windows/window[@name='windowBackpack']/panel[@name='header']/rect/button[@name='btnToggleLockMode']"/> -->
