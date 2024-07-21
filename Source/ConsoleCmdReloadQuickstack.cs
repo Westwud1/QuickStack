@@ -1,14 +1,21 @@
-﻿using System.Collections.Generic;
-using static WeatherManager;
+﻿using System;
+using System.Collections.Generic;
 
 public class ConsoleCmdReloadQuickStack : ConsoleCmdAbstract
 {
     public override void Execute(List<string> _params, CommandSenderInfo _senderInfo)
     {
-        if (_params.Count > 0)
-            SingletonMonoBehaviour<SdtdConsole>.Instance.Output("ignoring extra parameters");
+        try
+        {
+            if (_params.Count > 0)
+                SingletonMonoBehaviour<SdtdConsole>.Instance.Output("[QuickStack] Ignoring extra parameters");
 
-        QuickStack.LoadConfig();
+            QuickStack.LoadConfig();
+        }
+        catch (Exception e)
+        {
+            QuickStack.printExceptionInfo(e);
+        }
     }
 
     public override string[] getCommands()

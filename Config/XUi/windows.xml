@@ -5,7 +5,4 @@
 			<button depth="3" name="btnMoveQuickStack" sprite="ui_game_symbol_quickstack" tooltip_key="lblStashQuickStack" pos="150, -22" style="icon32px, press, hover" pivot="center" sound="[paging_click]"/>
 		</rect>	
 	</append>
-
-	<!-- Uncomment this next line if you want the vanilla lock mode icon removed -->
-	<!-- <remove xpath="/windows/window[@name='windowBackpack']/panel[@name='header']/rect/button[@name='btnToggleLockMode']"/> -->
 </configs>

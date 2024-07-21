@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <xml>
+	<!-- Hotkey for Quick Lock ("LeftAlt + LeftMouseButton" by default. Mouse buttons can not be changed) -->
 	<QuickLockButtons>308</QuickLockButtons>
+
+	<!-- Hotkey for Quick Stack ("LeftAlt + X" by default) -->
 	<QuickStackButtons>308 120</QuickStackButtons>
+	
+	<!-- Hotkey for Quick Restock ("LeftAlt + Z" by default) -->
 	<QuickRestockButtons>308 122</QuickRestockButtons>
+
+	<!-- Set this option to false if you want to remove the vanilla lock mode icon -->
+	<LockModeIconVisible>true</LockModeIconVisible>
 
 	<!-- Format is (X, Y, Z). X and Z are forwards/backwards/sideways and Y is up/down. Prefer to have X and Z the same value. -->
 	<!-- If the values are (7, 7, 7), that means you have a 15x15x15 box centered on your player that you can quick stack/restock. -->

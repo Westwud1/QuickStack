@@ -1,22 +1,45 @@
 ﻿using System;
 using Audio;
 using HarmonyLib;
-using UnityEngine;
 
 internal class Patches
 {
-    // This patch is used to initialize the UI functionality for the quickstack and restock buttons.
-    [HarmonyPatch(typeof(XUiC_ContainerStandardControls), "Init")]
+    // This patch is used to initialize the functionality for the quick slot locking and the UI functionality for the QuickStack and QuickRestock buttons
+    [HarmonyPatch(typeof(XUiC_BackpackWindow), "Init")]
     private class QS_1
     {
-        public static void Postfix(XUiC_ContainerStandardControls __instance)
+        public static void Postfix(XUiC_BackpackWindow __instance)
         {
-            if (__instance.Parent.Parent is XUiC_BackpackWindow)
+            try
             {
-                QuickStack.playerControls = __instance;
+                QuickStack.backpackWindow = __instance;
+                QuickStack.playerControls = __instance.GetChildByType<XUiC_ContainerStandardControls>();
+                QuickStack.playerBackpack = __instance.backpackGrid;
                 QuickStack.lastClickTimes.Fill(0.0f);
 
-                XUiController childById = __instance.GetChildById("btnMoveQuickStack");
+                XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
+
+                // Handle hotkey for locking slots
+                for (int i = 0; i < slots.Length; ++i)
+                {
+                    slots[i].OnPress += (XUiController _sender, int _mouseButton) =>
+                    {
+                        for (int j = 0; j < QuickStack.quickLockHotkeys.Length; j++)
+                        {
+                            if (!UICamera.GetKey(QuickStack.quickLockHotkeys[j]))
+                                return;
+                        }
+
+                        XUiC_ItemStack itemStack = _sender as XUiC_ItemStack;
+
+                        itemStack.UserLockedSlot = !itemStack.UserLockedSlot;
+                        QuickStack.backpackWindow.UpdateLockedSlots(QuickStack.playerControls);
+                        itemStack.xui.PlayMenuClickSound();
+                    };
+                }
+
+                // Handle clicking on QuickStack and QuickRestock
+                XUiController childById = QuickStack.playerControls.GetChildById("btnMoveQuickStack");
                 if (childById != null)
                 {
                     childById.OnPress += delegate (XUiController _sender, int _args)
@@ -25,7 +48,7 @@ internal class Patches
                     };
                 }
 
-                childById = __instance.GetChildById("btnMoveQuickRestock");
+                childById = QuickStack.playerControls.GetChildById("btnMoveQuickRestock");
                 if (childById != null)
                 {
                     childById.OnPress += delegate (XUiController _sender, int _args)
@@ -34,61 +57,50 @@ internal class Patches
                     };
                 }
             }
-        }
-    }
-
-    // This patch is used to initialize the functionality for the slot locking mechanism and load saved locked slots.
-    [HarmonyPatch(typeof(XUiC_BackpackWindow), "Init")]
-    private class QS_2
-    {
-        public static void Postfix(XUiC_BackpackWindow __instance)
-        {
-            QuickStack.backpackWindow = __instance;
-            QuickStack.playerBackpack = __instance.backpackGrid;
-            XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
-
-            QuickStack.SetLockIconColor();
-
-            for (int i = 0; i < slots.Length; ++i)
+            catch (Exception e)
             {
-                slots[i].OnPress += (XUiController _sender, int _mouseButton) =>
-                {
-                    for (int j = 0; j < QuickStack.quickLockHotkeys.Length; j++)
-                    {
-                        if (!UICamera.GetKey(QuickStack.quickLockHotkeys[j]))
-                            return;
-                    }
-
-                    XUiC_ItemStack itemStack = _sender as XUiC_ItemStack;
-
-                    itemStack.UserLockedSlot = !itemStack.UserLockedSlot;
-                    __instance.UpdateLockedSlots(QuickStack.playerControls);
-                    itemStack.xui.PlayMenuClickSound();
-                };
+                QuickStack.printExceptionInfo(e);
             }
         }
     }
 
-    // This patch is used to add a binding to know whether the player is not accessing other loot container inventories with some exceptions like workstations.
-    // This is used in the xml file to make the quickstack icon visible only when the player inventory is open.
-    [HarmonyPatch(typeof(XUiC_BackpackWindow), "GetBindingValue")]
+    // This patch is used to update the UI whenever the backpack is opened
+    [HarmonyPatch(typeof(XUiC_BackpackWindow), "OnOpen")]
+    private class QS_2
+    {
+        public static void Postfix(XUiC_BackpackWindow __instance)
+        {
+            QuickStack.UpdateUI();
+        }
+    }
+
+   // This patch is used to add a binding to know whether the player is not accessing other loot container inventories with some exceptions like workstations.
+   // This is used in the xml file to make the quickstack icon visible only when the player inventory is open.
+   [HarmonyPatch(typeof(XUiC_BackpackWindow), "GetBindingValue")]
     private class QS_3
     {
         public static void Postfix(ref bool __result, XUiC_BackpackWindow __instance, ref string value, string bindingName)
         {
-            if (__result == false)
+            try
             {
-                if (bindingName != null)
+                if (__result == false)
                 {
-                    if (bindingName == "notlootingorvehiclestorage")
+                    if (bindingName != null)
                     {
-                        bool flag1 = __instance.xui.vehicle != null && __instance.xui.vehicle.GetVehicle().HasStorage();
-                        bool flag2 = __instance.xui.lootContainer != null && __instance.xui.lootContainer.EntityId == -1;
-                        bool flag3 = __instance.xui.lootContainer != null && GameManager.Instance.World.GetEntity(__instance.xui.lootContainer.EntityId) is EntityDrone;
-                        value = (!flag1 && !flag2 && !flag3).ToString();
-                        __result = true;
+                        if (bindingName == "notlootingorvehiclestorage")
+                        {
+                            bool flag1 = __instance.xui.vehicle != null && __instance.xui.vehicle.GetVehicle().HasStorage();
+                            bool flag2 = __instance.xui.lootContainer != null && __instance.xui.lootContainer.EntityId == -1;
+                            bool flag3 = __instance.xui.lootContainer != null && GameManager.Instance.World.GetEntity(__instance.xui.lootContainer.EntityId) is EntityDrone;
+                            value = (!flag1 && !flag2 && !flag3).ToString();
+                            __result = true;
+                        }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                QuickStack.printExceptionInfo(e);
             }
         }
     }
@@ -99,27 +111,34 @@ internal class Patches
     {
         public static void Postfix(EntityPlayerLocal __instance)
         {
-            if (UICamera.GetKeyDown(QuickStack.quickStackHotkeys[QuickStack.quickStackHotkeys.Length - 1]))
+            try
             {
-                for (int i = 0; i < QuickStack.quickStackHotkeys.Length - 1; i++)
+                if (UICamera.GetKeyDown(QuickStack.quickStackHotkeys[QuickStack.quickStackHotkeys.Length - 1]))
                 {
-                    if (!UICamera.GetKey(QuickStack.quickStackHotkeys[i]))
-                        return;
-                }
+                    for (int i = 0; i < QuickStack.quickStackHotkeys.Length - 1; i++)
+                    {
+                        if (!UICamera.GetKey(QuickStack.quickStackHotkeys[i]))
+                            return;
+                    }
 
-                QuickStack.QuickStackOnClick();
-                Manager.PlayButtonClick();
+                    QuickStack.QuickStackOnClick();
+                    Manager.PlayButtonClick();
+                }
+                else if (UICamera.GetKeyDown(QuickStack.quickRestockHotkeys[QuickStack.quickRestockHotkeys.Length - 1]))
+                {
+                    for (int i = 0; i < QuickStack.quickRestockHotkeys.Length - 1; i++)
+                    {
+                        if (!UICamera.GetKey(QuickStack.quickRestockHotkeys[i]))
+                            return;
+                    }
+
+                    QuickStack.QuickRestockOnClick();
+                    Manager.PlayButtonClick();
+                }
             }
-            else if (UICamera.GetKeyDown(QuickStack.quickRestockHotkeys[QuickStack.quickRestockHotkeys.Length - 1]))
+            catch (Exception e)
             {
-                for (int i = 0; i < QuickStack.quickRestockHotkeys.Length - 1; i++)
-                {
-                    if (!UICamera.GetKey(QuickStack.quickRestockHotkeys[i]))
-                        return;
-                }
-
-                QuickStack.QuickRestockOnClick();
-                Manager.PlayButtonClick();
+                QuickStack.printExceptionInfo(e);
             }
         }
     }
@@ -131,8 +150,15 @@ internal class Patches
         [HarmonyPostfix]
         public static void Postfix(XUiC_ItemStack __instance)
         {
-            if (__instance.UserLockedSlot && QuickStack.lockBorderColor.a > 0)
-                __instance.selectionBorderColor = QuickStack.lockBorderColor;
+            try
+            {
+                if (__instance.UserLockedSlot && QuickStack.lockBorderColor.a > 0)
+                    __instance.selectionBorderColor = QuickStack.lockBorderColor;
+            }
+            catch (Exception e)
+            {
+                QuickStack.printExceptionInfo(e);
+            }
         }
     }
 }
