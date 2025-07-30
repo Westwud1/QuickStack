@@ -306,8 +306,7 @@ internal class QuickStack
                             continue;
 
                         lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-                        bool[] lockedSlots = new bool[lootWindowGroup.lootWindow.lootContainer.items.Length];
-                        lockedSlots.Fill(false);
+                        PackedBoolArray lockedSlots = new PackedBoolArray(lootWindowGroup.lootWindow.lootContainer.items.Length);
                         XUiM_LootContainer.StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, 0, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
                         val.Item2.SetModified();
                     }
@@ -344,8 +343,7 @@ internal class QuickStack
                     continue;
 
                 lootWindowGroup.SetTileEntityChest("QUICKSTACK", val.Item1);
-                bool[] lockedSlots = new bool[lootWindowGroup.lootWindow.lootContainer.items.Length];
-                lockedSlots.Fill(false);
+                PackedBoolArray lockedSlots = new PackedBoolArray(lootWindowGroup.lootWindow.lootContainer.items.Length);
                 XUiM_LootContainer.StashItems(backpackWindow, lootWindowGroup.lootWindow.lootContainer, playerUI.mXUi.PlayerInventory, 0, lockedSlots, moveKind, playerControls.MoveStartBottomRight);
                 val.Item2.SetModified();
             }
