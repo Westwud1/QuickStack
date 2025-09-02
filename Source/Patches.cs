@@ -76,7 +76,7 @@ internal class Patches
 
    // This patch is used to add a binding to know whether the player is not accessing other loot container inventories with some exceptions like workstations.
    // This is used in the xml file to make the quickstack icon visible only when the player inventory is open.
-   [HarmonyPatch(typeof(XUiC_BackpackWindow), "GetBindingValue")]
+   [HarmonyPatch(typeof(XUiC_BackpackWindow), "GetBindingValueInternal")]
     private class QS_3
     {
         public static void Postfix(ref bool __result, XUiC_BackpackWindow __instance, ref string value, string bindingName)
