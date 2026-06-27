@@ -96,15 +96,18 @@ internal class QuickStack
                         return containers.ToArray();
                     }
 
+                    if (storage.lockpickFeature != null && storage.lockpickFeature.NeedsLockpicking())
+                        continue;
+
+                    if (storage.lockFeature != null && storage.lockFeature.IsLocked() && !storage.lockFeature.IsUserAllowed(PlatformManager.InternalLocalUserIdentifier))
+                        continue;
+
                     if (storage.isJammed || storage.isQuestLoot || !storage.bTouched)
                         continue;
 
-                    TEFeatureLockable lockable = storage.lockFeature;
+                    LockEntry lockEntry = new LockEntry(tileEntity);
 
-                    if (lockable != null && lockable.IsLocked() && !lockable.IsUserAllowed(PlatformManager.InternalLocalUserIdentifier))
-                        continue;
-
-                    if (LockManager.Instance.IsLockedByLocalPlayer(storage))
+                    if (LockManager.Instance.singleLocks.ContainsValue(lockEntry) || LockManager.Instance.sharedLocks.ContainsValue(lockEntry))
                         continue;
 
                     containers.Add(storage);
@@ -178,8 +181,12 @@ internal class QuickStack
         LockManager.Instance.UnlockRequestLocal();
     }
 
-    public static void InitializeQuickLock(XUiController[] slots, XUiC_ContainerStandardControls controls)
+    public static void InitializeQuickLock(XUiC_ItemStackGrid grid, XUiC_ContainerStandardControls controls)
     {
+        controls.GetChildById("btnToggleLockMode").ViewComponent.IsVisible = lockModeIconVisible;
+
+        XUiC_ItemStack[] slots = grid.GetItemStackControllers();
+
         for (int i = 0; i < slots.Length; ++i)
         {
             int index = i;

@@ -23,7 +23,7 @@ internal class Patches
                 QuickStack.lastClickTimes.Fill(0.0f);
 
                 // Handle hotkey for locking slots
-                QuickStack.InitializeQuickLock(QuickStack.playerBackpack.GetItemStackControllers(), QuickStack.playerControls);
+                QuickStack.InitializeQuickLock(QuickStack.playerBackpack, QuickStack.playerControls);
 
                 // Handle clicking on QuickStack
                 XUiController childById = QuickStack.playerControls.GetChildById("btnMoveQuickStack");
@@ -63,9 +63,28 @@ internal class Patches
         {
             try
             {
-                // Handle hotkey for locking slots
-                QuickStack.InitializeQuickLock(__instance.lootContainer.GetItemStackControllers(), __instance.standardControls);
+                QuickStack.InitializeQuickLock(__instance.lootContainer, __instance.standardControls);
+            }
+            catch (Exception e)
+            {
+                QuickStack.LogException(e);
+            }
+        }
+    }
 
+    // ==================================================================================================
+    // This patch is used to initialize the functionality for the quick slot locking for the general
+    // bags including vehicles and drones.
+    // ==================================================================================================
+
+    [HarmonyPatch(typeof(XUiC_BagContainer), "Init")]
+    private class QS_3
+    {
+        public static void Postfix(XUiC_BagContainer __instance)
+        {
+            try
+            {
+                QuickStack.InitializeQuickLock(__instance, __instance.standardControls);
             }
             catch (Exception e)
             {
@@ -78,22 +97,17 @@ internal class Patches
     // This patch is used to update the slot icon color in the backpack if the slot is locked.
     // ==================================================================================================
 
-    [HarmonyPatch(typeof(XUiC_BackpackWindow), "OnOpen")]
-    private class QS_3
+    [HarmonyPatch(typeof(XUiC_ItemStackGrid), "OnOpen")]
+    private class QS_4
     {
-        public static void Postfix()
+        public static void Postfix(XUiC_ItemStackGrid __instance)
         {
             try
             {
-                if (QuickStack.playerBackpack == null)
-                    return;
-
-                XUiController[] slots = QuickStack.playerBackpack.GetItemStackControllers();
+                XUiController[] slots = __instance.GetItemStackControllers();
 
                 for (int i = 0; i < slots.Length; ++i)
                     (slots[i].GetChildById("iconSlotLock").ViewComponent as XUiV_Sprite).Color = QuickStack.lockIconColor;
-
-                QuickStack.playerControls.GetChildById("btnToggleLockMode").ViewComponent.IsVisible = QuickStack.lockModeIconVisible;
             }
             catch (Exception e)
             {
@@ -107,7 +121,7 @@ internal class Patches
     // ==================================================================================================
 
     [HarmonyPatch(typeof(XUiC_ItemStack), "updateBorderColor")]
-    class QS_4
+    private class QS_5
     {
         public static void Postfix(XUiC_ItemStack __instance)
         {
@@ -132,7 +146,7 @@ internal class Patches
     // ==================================================================================================
 
     [HarmonyPatch(typeof(XUiC_BackpackWindow), "GetBindingValueInternal")]
-    class QS_5
+    private class QS_6
     {
         public static void Postfix(ref bool __result, XUiC_BackpackWindow __instance, ref string value, string bindingName)
         {
@@ -157,7 +171,7 @@ internal class Patches
     // ==================================================================================================
 
     [HarmonyPatch(typeof(EntityPlayerLocal), "Update")]
-    class QS_6
+    private class QS_7
     {
         public static void Postfix()
         {
@@ -198,7 +212,7 @@ internal class Patches
     // ==================================================================================================
 
     [HarmonyPatch(typeof(LockManager), "LockResponse")]
-    class QS_7
+    private class QS_8
     {
         public static void Postfix(bool _success, string _errorMsg, ReadOnlySpan<ILockTarget> _targets, ILockContext _context, ushort _channel)
         {
@@ -227,7 +241,7 @@ internal class Patches
     // ==================================================================================================
 
     [HarmonyPatch(typeof(LockManager), "UnlockResponse")]
-    class QS_8
+    private class QS_9
     {
         public static void Postfix(bool _success, string _errorMsg, bool _isForceUnlocked)
         {
@@ -240,7 +254,7 @@ internal class Patches
     // ==================================================================================================
 
     [HarmonyPatch(typeof(TEFeatureStorage), "OnLockedLocal")]
-    class QS_9
+    private class QS_10
     {
         public static bool Prefix(bool _success, ILockContext _context, ushort _channel)
         {
@@ -253,7 +267,7 @@ internal class Patches
     // ==================================================================================================
 
     [HarmonyPatch(typeof(GUIWindowManager), "CloseAllOpenModalWindows", new Type[] { typeof(GUIWindow), typeof(bool) })]
-    class QS_10
+    private class QS_11
     {
         public static bool Prefix(GUIWindow _exceptWindow, bool _fromEsc)
         {
@@ -266,7 +280,7 @@ internal class Patches
     // ==================================================================================================
 
     [HarmonyPatch(typeof(LockManager), "LockRequestServer")]
-    class QS_11
+    private class QS_12
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
