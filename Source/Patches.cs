@@ -18,15 +18,13 @@ internal class Patches
             try
             {
                 QuickStack.backpackWindow = __instance;
-                QuickStack.playerControls = __instance.GetChildByType<XUiC_ContainerStandardControls>();
-                QuickStack.playerBackpack = __instance.backpackGrid;
                 QuickStack.lastClickTimes.Fill(0.0f);
 
                 // Handle hotkey for locking slots
-                QuickStack.InitializeQuickLock(QuickStack.playerBackpack, QuickStack.playerControls);
+                QuickStack.InitializeQuickLock(__instance.backpackGrid, __instance.standardControls);
 
                 // Handle clicking on QuickStack
-                XUiController childById = QuickStack.playerControls.GetChildById("btnMoveQuickStack");
+                XUiController childById = __instance.standardControls.GetChildById("btnMoveQuickStack");
                 if (childById != null)
                 {
                     childById.OnPress += delegate (XUiController _sender, int _args)
@@ -36,7 +34,7 @@ internal class Patches
                 }
 
                 // Handle clicking on QuickRestock
-                childById = QuickStack.playerControls.GetChildById("btnMoveQuickRestock");
+                childById = __instance.standardControls.GetChildById("btnMoveQuickRestock");
                 if (childById != null)
                 {
                     childById.OnPress += delegate (XUiController _sender, int _args)

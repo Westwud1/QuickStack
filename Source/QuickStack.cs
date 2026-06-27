@@ -19,9 +19,7 @@ internal class QuickStack
     public static float[] lastClickTimes = new float[(int)StackType.None];
     public static bool lockModeIconVisible = true;
     public static Vector3i stashDistance = new Vector3i(7, 7, 7);
-    public static XUiC_Backpack playerBackpack;
     public static XUiC_BackpackWindow backpackWindow;
-    public static XUiC_ContainerStandardControls playerControls;
     public static KeyCode[] quickLockHotkeys;
     public static KeyCode[] quickStackHotkeys;
     public static KeyCode[] quickRestockHotkeys;
@@ -154,7 +152,7 @@ internal class QuickStack
 
         foreach (TEFeatureStorage container in containers)
         {
-            XUiM_LootContainer.StashItems(backpackWindow, playerBackpack, container, 0, playerControls.LockedSlots, moveKind, playerControls.MoveStartBottomRight);
+            XUiM_LootContainer.StashItems(backpackWindow, backpackWindow.backpackGrid, container, 0, backpackWindow.standardControls.LockedSlots, moveKind, backpackWindow.standardControls.MoveStartBottomRight);
             container.SetModified();
         }
 
@@ -173,7 +171,7 @@ internal class QuickStack
         foreach (TEFeatureStorage container in containers)
         {
             lootWindow.SetTileEntityChest("QuickRestock", container);
-            XUiM_LootContainer.StashItems(backpackWindow, lootWindow.lootContainer, localPlayerUI.mXUi.PlayerInventory, 0, lootWindow.standardControls.LockedSlots, moveKind, playerControls.MoveStartBottomRight);
+            XUiM_LootContainer.StashItems(backpackWindow, lootWindow.lootContainer, localPlayerUI.mXUi.PlayerInventory, 0, lootWindow.standardControls.LockedSlots, moveKind, lootWindow.standardControls.MoveStartBottomRight);
             container.SetModified();
         }
 
@@ -185,12 +183,9 @@ internal class QuickStack
     {
         controls.GetChildById("btnToggleLockMode").ViewComponent.IsVisible = lockModeIconVisible;
 
-        XUiC_ItemStack[] slots = grid.GetItemStackControllers();
-
-        for (int i = 0; i < slots.Length; ++i)
+        foreach (XUiC_ItemStack slot in grid.GetItemStackControllers())
         {
-            int index = i;
-            slots[i].OnPress += (XUiController _sender, int _mouseButton) =>
+            slot.OnPress += (XUiController _sender, int _mouseButton) =>
             {
                 for (int j = 0; j < quickLockHotkeys.Length; ++j)
                 {
@@ -200,7 +195,7 @@ internal class QuickStack
                 
                 XUiC_ItemStack itemStack = _sender as XUiC_ItemStack;
                 itemStack.UserLockedSlot = !itemStack.UserLockedSlot;
-                controls.LockedSlots[index] = itemStack.userLockedSlot;
+                controls.UpdateLockedSlotStates(controls);
                 PlayClickSound();
             };
         }
