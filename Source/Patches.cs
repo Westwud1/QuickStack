@@ -226,6 +226,14 @@ internal class Patches
                     else if (QuickStack.stackInProgress == StackType.QuickRestock)
                         QuickStack.DoQuickRestock(_targets);
                 }
+                else
+                {
+                    // The server rejects the whole batch if any requested container is already
+                    // locked (e.g. another player has it open nearby). DoQuickStack/DoQuickRestock,
+                    // which normally reset stackInProgress via UnlockRequestLocal, never run in that
+                    // case, so it has to be cleared here to avoid getting stuck forever.
+                    QuickStack.stackInProgress = StackType.None;
+                }
             }
             catch (Exception e)
             {
