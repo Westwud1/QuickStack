@@ -150,13 +150,18 @@ internal class QuickStack
     {
         XUiM_LootContainer.EItemMoveKind moveKind = GetMoveKind(StackType.QuickStack);
 
-        foreach (TEFeatureStorage container in containers)
+        try
         {
-            XUiM_LootContainer.StashItems(backpackWindow, backpackWindow.backpackGrid, container, 0, backpackWindow.standardControls.LockedSlots, moveKind, backpackWindow.standardControls.MoveStartBottomRight);
-            container.SetModified();
+            foreach (TEFeatureStorage container in containers)
+            {
+                XUiM_LootContainer.StashItems(backpackWindow, backpackWindow.backpackGrid, container, 0, backpackWindow.standardControls.LockedSlots, moveKind, backpackWindow.standardControls.MoveStartBottomRight);
+                container.SetModified();
+            }
         }
-
-        LockManager.Instance.UnlockRequestLocal();
+        finally
+        {
+            LockManager.Instance.UnlockRequestLocal();
+        }
     }
 
     public static void DoQuickRestock(ReadOnlySpan<ILockTarget> containers)
@@ -168,15 +173,20 @@ internal class QuickStack
         ITileEntityLootable previousTileEntity = lootWindow.te;
         string previousName = lootWindow.lootContainerName;
 
-        foreach (TEFeatureStorage container in containers)
+        try
         {
-            lootWindow.SetTileEntityChest("QuickRestock", container);
-            XUiM_LootContainer.StashItems(backpackWindow, lootWindow.lootContainer, localPlayerUI.mXUi.PlayerInventory, 0, lootWindow.standardControls.LockedSlots, moveKind, lootWindow.standardControls.MoveStartBottomRight);
-            container.SetModified();
+            foreach (TEFeatureStorage container in containers)
+            {
+                lootWindow.SetTileEntityChest("QuickRestock", container);
+                XUiM_LootContainer.StashItems(backpackWindow, lootWindow.lootContainer, localPlayerUI.mXUi.PlayerInventory, 0, lootWindow.standardControls.LockedSlots, moveKind, lootWindow.standardControls.MoveStartBottomRight);
+                container.SetModified();
+            }
         }
-
-        lootWindow.SetTileEntityChest(previousName, previousTileEntity);
-        LockManager.Instance.UnlockRequestLocal();
+        finally
+        {
+            lootWindow.SetTileEntityChest(previousName, previousTileEntity);
+            LockManager.Instance.UnlockRequestLocal();
+        }
     }
 
     public static void InitializeQuickLock(XUiC_ItemStackGrid grid, XUiC_ContainerStandardControls controls)
