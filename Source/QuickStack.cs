@@ -15,6 +15,7 @@ public enum StackType
 
 internal class QuickStack
 {
+    public static string version = "Unknown";
     public static string configFilePath;
     public static float[] lastClickTimes = new float[(int)StackType.None];
     public static bool lockModeIconVisible = true;
@@ -29,12 +30,12 @@ internal class QuickStack
 
     public static void LogInfo(string msg)
     {
-        Log.Out($"[QuickStack] {msg}");
+        Log.Out($"[QuickStack {version}] {msg}");
     }
 
     public static void LogWarning(string msg)
     {
-        Log.Warning($"[QuickStack] {msg}");
+        Log.Warning($"[QuickStack {version}] {msg}");
     }
 
     public static void LogException(Exception e)
@@ -158,6 +159,10 @@ internal class QuickStack
                 container.SetModified();
             }
         }
+        catch (Exception e)
+        {
+            LogException(e);
+        }
         finally
         {
             LockManager.Instance.UnlockRequestLocal();
@@ -181,6 +186,10 @@ internal class QuickStack
                 XUiM_LootContainer.StashItems(backpackWindow, lootWindow.lootContainer, localPlayerUI.mXUi.PlayerInventory, 0, lootWindow.standardControls.LockedSlots, moveKind, lootWindow.standardControls.MoveStartBottomRight);
                 container.SetModified();
             }
+        }
+        catch (Exception e)
+        {
+            LogException(e);
         }
         finally
         {
