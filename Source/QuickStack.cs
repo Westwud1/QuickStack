@@ -61,7 +61,7 @@ internal class QuickStack
             return XUiM_LootContainer.EItemMoveKind.FillOnly;
     }
 
-    private static TEFeatureStorage[] GetNearbyContainers()
+    private static List<TEFeatureStorage> GetNearbyContainers()
     {
         List<TEFeatureStorage> containers = new List<TEFeatureStorage>();
 
@@ -91,8 +91,8 @@ internal class QuickStack
                     if (storage.IsUserAccessing())
                     {
                         containers.Clear();
-                        LogInfo("Unable to quick stack/restock while having a container opened");
-                        return containers.ToArray();
+                        LogWarning("Unable to quick stack/restock while having a container opened");
+                        return containers;
                     }
 
                     if (storage.lockpickFeature != null && storage.lockpickFeature.NeedsLockpicking())
@@ -101,10 +101,10 @@ internal class QuickStack
                     if (storage.lockFeature != null && storage.lockFeature.IsLocked() && !storage.lockFeature.IsUserAllowed(PlatformManager.InternalLocalUserIdentifier))
                         continue;
 
-                    if (storage.isJammed || storage.isQuestLoot || !storage.bTouched)
+                    if (storage.isJammed || storage.isQuestLoot)
                         continue;
 
-                    LockEntry lockEntry = new LockEntry(tileEntity);
+                    LockManager.LockEntry lockEntry = new LockManager.LockEntry(tileEntity);
 
                     if (LockManager.Instance.singleLocks.ContainsValue(lockEntry) || LockManager.Instance.sharedLocks.ContainsValue(lockEntry))
                         continue;
@@ -116,7 +116,7 @@ internal class QuickStack
 
         LogInfo($"Found {containers.Count} nearby suitable containers");
 
-        return containers.ToArray();
+        return containers;
     }
 
     public static void RequestQuickStack()
@@ -124,13 +124,13 @@ internal class QuickStack
         if (stackInProgress != StackType.None)
             return;
 
-        TEFeatureStorage[] containers = GetNearbyContainers();
+        List<TEFeatureStorage> containers = GetNearbyContainers();
 
-        if (containers.Length == 0)
+        if (containers.Count == 0)
             return;
 
         stackInProgress = StackType.QuickStack;
-        LockManager.Instance.LockRequestLocal(containers);
+        LockManager.Instance.LockRequestLocal(containers.ToArray());
     }
 
     public static void RequestQuickRestock()
@@ -138,63 +138,39 @@ internal class QuickStack
         if (stackInProgress != StackType.None)
             return;
 
-        TEFeatureStorage[] containers = GetNearbyContainers();
+        List<TEFeatureStorage> containers = GetNearbyContainers();
 
-        if (containers.Length == 0)
+        if (containers.Count == 0)
             return;
 
         stackInProgress = StackType.QuickRestock;
-        LockManager.Instance.LockRequestLocal(containers);
+        LockManager.Instance.LockRequestLocal(containers.ToArray());
     }
 
-    public static void DoQuickStack(ReadOnlySpan<ILockTarget> containers)
+    public static void DoQuickStack(List<LockManager.LockEntry> containers)
     {
         XUiM_LootContainer.EItemMoveKind moveKind = GetMoveKind(StackType.QuickStack);
 
-        try
+        foreach (LockManager.LockEntry lockTarget in containers)
         {
-            foreach (TEFeatureStorage container in containers)
-            {
-                XUiM_LootContainer.StashItems(backpackWindow, backpackWindow.backpackGrid, container, 0, backpackWindow.standardControls.LockedSlots, moveKind, backpackWindow.standardControls.MoveStartBottomRight);
-                container.SetModified();
-            }
-        }
-        catch (Exception e)
-        {
-            LogException(e);
-        }
-        finally
-        {
-            LockManager.Instance.UnlockRequestLocal();
+            TEFeatureStorage container = lockTarget.Target as TEFeatureStorage;
+            XUiM_LootContainer.StashItems(backpackWindow, backpackWindow.backpackGrid, container, 0, backpackWindow.standardControls.LockedSlots, moveKind, backpackWindow.standardControls.MoveStartBottomRight);
+            container.SetModified();
         }
     }
 
-    public static void DoQuickRestock(ReadOnlySpan<ILockTarget> containers)
+    public static void DoQuickRestock(List<LockManager.LockEntry> containers)
     {
         XUiM_LootContainer.EItemMoveKind moveKind = GetMoveKind(StackType.QuickRestock);
         LocalPlayerUI localPlayerUI = LocalPlayerUI.GetUIForPrimaryPlayer();
         XUiC_LootWindow lootWindow = ((XUiC_LootWindowGroup)((XUiWindowGroup)localPlayerUI.windowManager.GetWindow("looting")).Controller).lootWindow;
 
-        ITileEntityLootable previousTileEntity = lootWindow.te;
-        string previousName = lootWindow.lootContainerName;
-
-        try
+        foreach (LockManager.LockEntry lockTarget in containers)
         {
-            foreach (TEFeatureStorage container in containers)
-            {
-                lootWindow.SetTileEntityChest("QuickRestock", container);
-                XUiM_LootContainer.StashItems(backpackWindow, lootWindow.lootContainer, localPlayerUI.mXUi.PlayerInventory, 0, lootWindow.standardControls.LockedSlots, moveKind, lootWindow.standardControls.MoveStartBottomRight);
-                container.SetModified();
-            }
-        }
-        catch (Exception e)
-        {
-            LogException(e);
-        }
-        finally
-        {
-            lootWindow.SetTileEntityChest(previousName, previousTileEntity);
-            LockManager.Instance.UnlockRequestLocal();
+            TEFeatureStorage container = lockTarget.Target as TEFeatureStorage;
+            lootWindow.SetTileEntityChest("QuickRestock", container);
+            XUiM_LootContainer.StashItems(backpackWindow, lootWindow.lootContainer, localPlayerUI.mXUi.PlayerInventory, 0, lootWindow.standardControls.LockedSlots, moveKind, lootWindow.standardControls.MoveStartBottomRight);
+            container.SetModified();
         }
     }
 

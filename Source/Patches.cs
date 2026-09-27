@@ -209,31 +209,35 @@ internal class Patches
     // This patch is used for processing the result after requesting a lock for the containers.
     // ==================================================================================================
 
-    [HarmonyPatch(typeof(LockManager), "LockResponse")]
+    [HarmonyPatch(typeof(LockManager), "LockResponseLocal")]
     private class QS_8
     {
-        public static void Postfix(bool _success, string _errorMsg, ReadOnlySpan<ILockTarget> _targets, ILockContext _context, ushort _channel)
+        public static void Postfix(LockManager __instance)
         {
             if (QuickStack.stackInProgress == StackType.None)
                 return;
 
+            List<LockManager.LockEntry> containers = new List<LockManager.LockEntry>();
+            __instance.singleLocks.TryGetByKey(GameManager.Instance.World.GetPrimaryPlayerId(), containers);
+            __instance.sharedLocks.TryGetByKey(GameManager.Instance.World.GetPrimaryPlayerId(), containers);
+
             try
             {
-                if (_success)
+                if (containers.Count > 0)
                 {
                     if (QuickStack.stackInProgress == StackType.QuickStack)
-                        QuickStack.DoQuickStack(_targets);
+                        QuickStack.DoQuickStack(containers);
                     else if (QuickStack.stackInProgress == StackType.QuickRestock)
-                        QuickStack.DoQuickRestock(_targets);
-                }
-                else
-                {
-                    QuickStack.stackInProgress = StackType.None;
+                        QuickStack.DoQuickRestock(containers);
                 }
             }
             catch (Exception e)
             {
                 QuickStack.LogException(e);
+            }
+            finally
+            {
+                LockManager.Instance.UnlockRequestLocal();
             }
         }
     }
@@ -242,10 +246,10 @@ internal class Patches
     // This patch is used for processing the result after requesting an unlock for the containers.
     // ==================================================================================================
 
-    [HarmonyPatch(typeof(LockManager), "UnlockResponse")]
+    [HarmonyPatch(typeof(LockManager), "UnlockResponseLocal")]
     private class QS_9
     {
-        public static void Postfix(bool _success, string _errorMsg, bool _isForceUnlocked)
+        public static void Postfix()
         {
             QuickStack.stackInProgress = StackType.None;
         }
@@ -255,10 +259,10 @@ internal class Patches
     // This patch is used to not open container UI when requesting a lock for the containers.
     // ==================================================================================================
 
-    [HarmonyPatch(typeof(TEFeatureStorage), "OnLockedLocal")]
+    [HarmonyPatch(typeof(XUiC_LootWindowGroup), "OpenLooting")]
     private class QS_10
     {
-        public static bool Prefix(bool _success, ILockContext _context, ushort _channel)
+        public static bool Prefix()
         {
             return QuickStack.stackInProgress == StackType.None;
         }
@@ -271,7 +275,7 @@ internal class Patches
     [HarmonyPatch(typeof(GUIWindowManager), "CloseAllOpenModalWindows", new Type[] { typeof(GUIWindow), typeof(bool) })]
     private class QS_11
     {
-        public static bool Prefix(GUIWindow _exceptWindow, bool _fromEsc)
+        public static bool Prefix()
         {
             return QuickStack.stackInProgress == StackType.None;
         }
